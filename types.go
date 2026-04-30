@@ -28,66 +28,69 @@ package blueticks
 type MessagesPage struct {
 	Data       []Message `json:"data"`
 	HasMore    bool      `json:"has_more"`
-	NextCursor string    `json:"next_cursor,omitempty"`
+	NextCursor *string   `json:"next_cursor,omitempty"`
 }
 
 // AudiencesPage is the paginated response from AudiencesResource.List.
 type AudiencesPage struct {
 	Data       []Audience `json:"data"`
 	HasMore    bool       `json:"has_more"`
-	NextCursor string     `json:"next_cursor,omitempty"`
+	NextCursor *string    `json:"next_cursor,omitempty"`
 }
 
 // CampaignsPage is the paginated response from CampaignsResource.List.
 type CampaignsPage struct {
 	Data       []Campaign `json:"data"`
 	HasMore    bool       `json:"has_more"`
-	NextCursor string     `json:"next_cursor,omitempty"`
+	NextCursor *string    `json:"next_cursor,omitempty"`
 }
 
 // WebhooksPage is the paginated response from WebhooksResource.List.
 type WebhooksPage struct {
 	Data       []Webhook `json:"data"`
 	HasMore    bool      `json:"has_more"`
-	NextCursor string    `json:"next_cursor,omitempty"`
+	NextCursor *string   `json:"next_cursor,omitempty"`
 }
 
 // ChatsPage is the paginated response from ChatsResource.List.
 type ChatsPage struct {
-	Data       []Chat `json:"data"`
-	HasMore    bool   `json:"has_more"`
-	NextCursor string `json:"next_cursor,omitempty"`
+	Data       []Chat  `json:"data"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor *string `json:"next_cursor,omitempty"`
 }
 
 // ChatMessagesPage is the paginated response from ChatsResource.ListMessages.
 type ChatMessagesPage struct {
 	Data       []ChatMessage `json:"data"`
 	HasMore    bool          `json:"has_more"`
-	NextCursor string        `json:"next_cursor,omitempty"`
+	NextCursor *string       `json:"next_cursor,omitempty"`
 }
 
 // ParticipantsPage is the paginated response from ChatsResource.ListParticipants.
 type ParticipantsPage struct {
 	Data       []Participant `json:"data"`
 	HasMore    bool          `json:"has_more"`
-	NextCursor string        `json:"next_cursor,omitempty"`
+	NextCursor *string       `json:"next_cursor,omitempty"`
 }
 
 // ContactsPage is the paginated response from ContactsResource.List.
 type ContactsPage struct {
 	Data       []Contact `json:"data"`
 	HasMore    bool      `json:"has_more"`
-	NextCursor string    `json:"next_cursor,omitempty"`
+	NextCursor *string   `json:"next_cursor,omitempty"`
 }
 
 // --- Account / Ping ----------------------------------------------------------
 
 // Account is the response from GET /v1/account.
+//
+// Timezone is a pointer because the OpenAPI declares it `string|null`;
+// nil means the server returned `null`, not just an empty string.
 type Account struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Timezone  string `json:"timezone,omitempty"`
-	CreatedAt string `json:"created_at"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Timezone  *string `json:"timezone,omitempty"`
+	CreatedAt string  `json:"created_at"`
 }
 
 // Ping is the response from GET /v1/ping.
@@ -258,12 +261,17 @@ type UpdateWebhookParams struct {
 // --- Chats / Engine-sourced --------------------------------------------------
 
 // Chat is a WhatsApp conversation.
+//
+// Pointer fields preserve the wire-level null vs. empty distinction
+// (the OpenAPI declares them `string|null` / `integer|null`). nil ==
+// "the server returned null"; a non-nil empty string means the field
+// was present but blank.
 type Chat struct {
-	ID            string `json:"id"`
-	Name          string `json:"name,omitempty"`
-	IsGroup       bool   `json:"is_group"`
-	LastMessageAt string `json:"last_message_at,omitempty"`
-	UnreadCount   int    `json:"unread_count,omitempty"`
+	ID            string  `json:"id"`
+	Name          *string `json:"name,omitempty"`
+	IsGroup       bool    `json:"is_group"`
+	LastMessageAt *string `json:"last_message_at,omitempty"`
+	UnreadCount   *int    `json:"unread_count,omitempty"`
 }
 
 // Participant is a member of a group chat.
