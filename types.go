@@ -355,10 +355,58 @@ type ListChatMessagesParams struct {
 	Cursor       string
 }
 
-// MessageAcksResponse is the loosely-typed response from BatchMessageAcks /
-// GetMessageAck. The server returns a sparse, per-key ack envelope; we keep
-// it as a free-form map for forward compatibility.
-type MessageAcksResponse map[string]interface{}
+// OkResponse is the `{"ok": true}` envelope returned by chat write endpoints
+// (mark_read, reactions) that don't have a richer payload to surface.
+type OkResponse struct {
+	Ok bool `json:"ok"`
+}
+
+// ChatRef is the `{"chat_id": "..."}` envelope returned by ChatsResource.Open.
+type ChatRef struct {
+	ChatID string `json:"chat_id"`
+}
+
+// MessageAck is the response from GET /v1/chats/{chat_id}/messages/{key}/ack.
+//
+// Ack semantics: -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played.
+// nil means no engine response was available.
+type MessageAck struct {
+	Ack *int `json:"ack"`
+}
+
+// LoadOlderMessagesResponse is the response from
+// POST /v1/chats/{chat_id}/messages/load_older.
+//
+// TotalMessages and Added are pointers because the OpenAPI declares them
+// nullable; CanLoadMore is required.
+type LoadOlderMessagesResponse struct {
+	TotalMessages *int `json:"total_messages"`
+	Added         *int `json:"added"`
+	CanLoadMore   bool `json:"can_load_more"`
+}
+
+// MediaURLResponse is the response from
+// GET /v1/chats/{chat_id}/messages/{key}/media_url.
+//
+// URL is a pointer because the OpenAPI declares it nullable; nil means the
+// engine could not produce a hosted URL.
+type MediaURLResponse struct {
+	URL *string `json:"url"`
+}
+
+// BatchMessageAcksParams is the body for ChatsResource.BatchMessageAcks.
+type BatchMessageAcksParams struct {
+	MessageKeys []string `json:"message_keys"`
+}
+
+// BatchMessageAcksResponse is the response from POST /v1/chats/message_acks.
+//
+// Each Data entry is a free-form per-message ack envelope (the server permits
+// additional properties, so the SDK keeps the entry as a map for forward
+// compatibility).
+type BatchMessageAcksResponse struct {
+	Data []map[string]interface{} `json:"data"`
+}
 
 // --- Contacts ----------------------------------------------------------------
 

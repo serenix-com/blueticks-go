@@ -7,33 +7,35 @@ import (
 )
 
 func TestGroupsCRUD(t *testing.T) {
+	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"created_at":null,"last_message_at":null,"participant_count":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups":
-			jsonResponse(w, `{"id":"g_1","name":"Team"}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/groups/g_1":
-			jsonResponse(w, `{"id":"g_1","name":"Team"}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/groups/g_1":
-			jsonResponse(w, `{"id":"g_1","name":"Team Renamed"}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups/g_1/members":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/c1@c.us":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups/g_1/members/c1@c.us/admin":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/c1@c.us/admin":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodPut && r.URL.Path == "/v1/groups/g_1/picture":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, groupBody)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/me":
-			jsonResponse(w, `{"ok":true}`)
+			w.WriteHeader(http.StatusNoContent)
 		default:
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
 	})
 	ctx := context.Background()
-	if _, err := c.Groups.Create(ctx, CreateGroupParams{Name: "Team", Participants: []string{"c1@c.us"}}); err != nil {
-		t.Fatalf("Create: %v", err)
+	g, err := c.Groups.Create(ctx, CreateGroupParams{Name: "Team", Participants: []string{"c1@c.us"}})
+	if err != nil || g.ID != "g_1" {
+		t.Fatalf("Create: %v %+v", err, g)
 	}
 	if _, err := c.Groups.Get(ctx, "g_1"); err != nil {
 		t.Fatalf("Get: %v", err)
@@ -41,7 +43,7 @@ func TestGroupsCRUD(t *testing.T) {
 	if _, err := c.Groups.Update(ctx, "g_1", UpdateGroupParams{Name: "Team Renamed"}); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
-	if _, err := c.Groups.AddMember(ctx, "g_1", "c1@c.us"); err != nil {
+	if _, err := c.Groups.AddMember(ctx, "g_1", AddMemberParams{ChatID: "c1@c.us"}); err != nil {
 		t.Fatalf("AddMember: %v", err)
 	}
 	if _, err := c.Groups.RemoveMember(ctx, "g_1", "c1@c.us"); err != nil {
@@ -56,8 +58,16 @@ func TestGroupsCRUD(t *testing.T) {
 	if _, err := c.Groups.SetPicture(ctx, "g_1", SetGroupPictureParams{FileDataURL: "data:image/png;base64,AAA"}); err != nil {
 		t.Fatalf("SetPicture: %v", err)
 	}
-	if _, err := c.Groups.Leave(ctx, "g_1"); err != nil {
+	if err := c.Groups.Leave(ctx, "g_1"); err != nil {
 		t.Fatalf("Leave: %v", err)
+	}
+}
+
+// TestGroupsDecodesEmptyTypedResponse locks in encoding/json's lenient
+// behavior — an empty `{}` decodes Group to the zero value without panicking.
+func TestGroupsDecodesEmptyTypedResponse(t *testing.T) {
+	if err := decodeJSON([]byte(`{}`), &Group{}); err != nil {
+		t.Fatalf("Group: %v", err)
 	}
 }
 

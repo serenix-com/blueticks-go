@@ -70,7 +70,9 @@ func (r *ChatsResource) Get(ctx context.Context, chatID string) (*Chat, error) {
 	return out, nil
 }
 
-// ListParticipants in a group chat. Cursor-paginated.
+// ListParticipants returns chat participants. For group chats, the
+// participant list is paginated; for DMs, the single counterparty is
+// returned in a one-element page.
 func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, params ListParticipantsParams) (*ParticipantsPage, error) {
 	q := url.Values{}
 	if params.Limit > 0 {
@@ -94,32 +96,41 @@ func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, par
 	return out, nil
 }
 
-// MarkRead marks a chat as read.
-func (r *ChatsResource) MarkRead(ctx context.Context, chatID string) (map[string]any, error) {
-	return r.actionMap(ctx, chatID, "mark_read")
-}
-
-// Open the chat in the engine (signals presence/read receipts).
-func (r *ChatsResource) Open(ctx context.Context, chatID string) (map[string]any, error) {
-	return r.actionMap(ctx, chatID, "open")
-}
-
-func (r *ChatsResource) actionMap(ctx context.Context, chatID, action string) (map[string]any, error) {
+// MarkRead clears the unread badge on the connected engine for the given chat.
+func (r *ChatsResource) MarkRead(ctx context.Context, chatID string) (*OkResponse, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/" + action,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/mark_read",
 	})
 	if err != nil {
 		return nil, err
 	}
-	out := map[string]any{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ListMessages in a chat.
+// Open brings the chat to the foreground on the connected WhatsApp Web client
+// (creating the chat if it doesn't exist yet for the engine). Useful before
+// issuing follow-up reads on a fresh JID.
+func (r *ChatsResource) Open(ctx context.Context, chatID string) (*ChatRef, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/open",
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &ChatRef{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ListMessages returns messages from a chat.
 //
 // `MessageTypes` is sent as a single comma-separated query value because the
 // OpenAPI schema declares `style: form, explode: false` for that param.
@@ -179,10 +190,10 @@ func (r *ChatsResource) GetMessage(ctx context.Context, chatID, key string) (*Ch
 	return out, nil
 }
 
-// GetMessageAck returns the per-recipient acknowledgement state for a
-// single message. Shape varies by chat type, so the response is returned
-// as a free-form map for forward compatibility.
-func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (MessageAcksResponse, error) {
+// GetMessageAck returns the WhatsApp ack value for a sent message:
+// -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played; nil when no
+// engine response.
+func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (*MessageAck, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
 		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/ack",
@@ -190,8 +201,8 @@ func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (
 	if err != nil {
 		return nil, err
 	}
-	out := MessageAcksResponse{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &MessageAck{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -199,7 +210,7 @@ func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (
 
 // React adds or replaces a reaction emoji on a message. Pass an empty
 // emoji to clear an existing reaction.
-func (r *ChatsResource) React(ctx context.Context, chatID, key, emoji string) (map[string]any, error) {
+func (r *ChatsResource) React(ctx context.Context, chatID, key, emoji string) (*OkResponse, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
 		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/reactions",
@@ -208,17 +219,18 @@ func (r *ChatsResource) React(ctx context.Context, chatID, key, emoji string) (m
 	if err != nil {
 		return nil, err
 	}
-	out := map[string]any{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// LoadOlderMessages tells the engine to fetch and persist older history
-// for a chat. Returns when the load is complete (or the engine reports
-// no further history is available).
-func (r *ChatsResource) LoadOlderMessages(ctx context.Context, chatID string) (map[string]any, error) {
+// LoadOlderMessages asks the engine to pull older history from the connected
+// phone for chats that haven't been fully synced yet. Use this once before
+// paginating with `since` if you need messages older than what's already
+// cached.
+func (r *ChatsResource) LoadOlderMessages(ctx context.Context, chatID string) (*LoadOlderMessagesResponse, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
 		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/load_older",
@@ -226,8 +238,8 @@ func (r *ChatsResource) LoadOlderMessages(ctx context.Context, chatID string) (m
 	if err != nil {
 		return nil, err
 	}
-	out := map[string]any{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &LoadOlderMessagesResponse{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -251,8 +263,10 @@ func (r *ChatsResource) GetMedia(ctx context.Context, chatID, key string) (*Chat
 	return out, nil
 }
 
-// GetMediaURL returns a short-lived signed URL pointing at the media for a message.
-func (r *ChatsResource) GetMediaURL(ctx context.Context, chatID, key string) (map[string]any, error) {
+// GetMediaURL returns a hosted URL for the message media without inlining
+// bytes. Faster + cheaper than GetMedia when the caller can fetch the URL
+// themselves.
+func (r *ChatsResource) GetMediaURL(ctx context.Context, chatID, key string) (*MediaURLResponse, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
 		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/media_url",
@@ -260,26 +274,26 @@ func (r *ChatsResource) GetMediaURL(ctx context.Context, chatID, key string) (ma
 	if err != nil {
 		return nil, err
 	}
-	out := map[string]any{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &MediaURLResponse{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// BatchMessageAcks fetches ack state for many messages in one call.
-// The response is keyed by message key.
-func (r *ChatsResource) BatchMessageAcks(ctx context.Context, messageKeys []string) (MessageAcksResponse, error) {
+// BatchMessageAcks fetches ack state for up to 200 sent messages in one call.
+// Useful for campaign dashboards and status reconciliation.
+func (r *ChatsResource) BatchMessageAcks(ctx context.Context, params BatchMessageAcksParams) (*BatchMessageAcksResponse, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
 		path:   "/v1/chats/message_acks",
-		body:   map[string]any{"message_keys": messageKeys},
+		body:   params,
 	})
 	if err != nil {
 		return nil, err
 	}
-	out := MessageAcksResponse{}
-	if err := decodeJSON(body, &out); err != nil {
+	out := &BatchMessageAcksResponse{}
+	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
 	return out, nil

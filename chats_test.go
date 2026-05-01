@@ -26,6 +26,22 @@ func TestChatsList(t *testing.T) {
 	}
 }
 
+func TestChatsListParticipants(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/chats/g1@g.us/participants" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, `{"data":[{"chat_id":"c1@c.us","is_admin":true,"is_super_admin":false}],"has_more":false,"next_cursor":null}`)
+	})
+	got, err := c.Chats.ListParticipants(context.Background(), "g1@g.us", ListParticipantsParams{Limit: 50})
+	if err != nil {
+		t.Fatalf("ListParticipants: %v", err)
+	}
+	if len(got.Data) != 1 || got.Data[0].ChatID != "c1@c.us" || !got.Data[0].IsAdmin {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
 func TestChatsListMessagesEncodesMessageTypes(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, "/v1/chats/") || !strings.HasSuffix(r.URL.Path, "/messages") {
@@ -53,32 +69,77 @@ func TestChatsActions(t *testing.T) {
 		case r.URL.Path == "/v1/chats/c1@c.us/mark_read":
 			jsonResponse(w, `{"ok":true}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/open":
-			jsonResponse(w, `{"ok":true}`)
+			jsonResponse(w, `{"chat_id":"c1@c.us"}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/reactions":
 			jsonResponse(w, `{"ok":true}`)
+		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/ack":
+			jsonResponse(w, `{"ack":3}`)
+		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/media_url":
+			jsonResponse(w, `{"url":"https://example.com/m.jpg"}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/messages/load_older":
-			jsonResponse(w, `{"loaded":10}`)
+			jsonResponse(w, `{"total_messages":120,"added":40,"can_load_more":true}`)
 		case r.URL.Path == "/v1/chats/message_acks":
-			jsonResponse(w, `{"k1":{"ack":3}}`)
+			jsonResponse(w, `{"data":[{"key":"k1","ack":3}]}`)
 		default:
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
 	})
 	ctx := context.Background()
-	if _, err := c.Chats.MarkRead(ctx, "c1@c.us"); err != nil {
-		t.Fatalf("MarkRead: %v", err)
+
+	mr, err := c.Chats.MarkRead(ctx, "c1@c.us")
+	if err != nil || !mr.Ok {
+		t.Fatalf("MarkRead: %v %+v", err, mr)
 	}
-	if _, err := c.Chats.Open(ctx, "c1@c.us"); err != nil {
-		t.Fatalf("Open: %v", err)
+	op, err := c.Chats.Open(ctx, "c1@c.us")
+	if err != nil || op.ChatID != "c1@c.us" {
+		t.Fatalf("Open: %v %+v", err, op)
 	}
-	if _, err := c.Chats.React(ctx, "c1@c.us", "k1", "🔥"); err != nil {
-		t.Fatalf("React: %v", err)
+	rx, err := c.Chats.React(ctx, "c1@c.us", "k1", "🔥")
+	if err != nil || !rx.Ok {
+		t.Fatalf("React: %v %+v", err, rx)
 	}
-	if _, err := c.Chats.LoadOlderMessages(ctx, "c1@c.us"); err != nil {
-		t.Fatalf("LoadOlderMessages: %v", err)
+	ack, err := c.Chats.GetMessageAck(ctx, "c1@c.us", "k1")
+	if err != nil || ack.Ack == nil || *ack.Ack != 3 {
+		t.Fatalf("GetMessageAck: %v %+v", err, ack)
 	}
-	if _, err := c.Chats.BatchMessageAcks(ctx, []string{"k1"}); err != nil {
-		t.Fatalf("BatchMessageAcks: %v", err)
+	mu, err := c.Chats.GetMediaURL(ctx, "c1@c.us", "k1")
+	if err != nil || mu.URL == nil || *mu.URL != "https://example.com/m.jpg" {
+		t.Fatalf("GetMediaURL: %v %+v", err, mu)
+	}
+	lo, err := c.Chats.LoadOlderMessages(ctx, "c1@c.us")
+	if err != nil || !lo.CanLoadMore || lo.Added == nil || *lo.Added != 40 {
+		t.Fatalf("LoadOlderMessages: %v %+v", err, lo)
+	}
+	bm, err := c.Chats.BatchMessageAcks(ctx, BatchMessageAcksParams{MessageKeys: []string{"k1"}})
+	if err != nil || len(bm.Data) != 1 {
+		t.Fatalf("BatchMessageAcks: %v %+v", err, bm)
+	}
+}
+
+// TestChatsDecodesEmptyTypedResponses locks in encoding/json's lenient
+// behavior for the new typed envelopes — an empty `{}` decodes to the
+// zero value without panicking.
+func TestChatsDecodesEmptyTypedResponses(t *testing.T) {
+	if err := decodeJSON([]byte(`{}`), &OkResponse{}); err != nil {
+		t.Fatalf("OkResponse: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &ChatRef{}); err != nil {
+		t.Fatalf("ChatRef: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &MessageAck{}); err != nil {
+		t.Fatalf("MessageAck: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &LoadOlderMessagesResponse{}); err != nil {
+		t.Fatalf("LoadOlderMessagesResponse: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &MediaURLResponse{}); err != nil {
+		t.Fatalf("MediaURLResponse: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &BatchMessageAcksResponse{}); err != nil {
+		t.Fatalf("BatchMessageAcksResponse: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &ParticipantsPage{}); err != nil {
+		t.Fatalf("ParticipantsPage: %v", err)
 	}
 }
 
