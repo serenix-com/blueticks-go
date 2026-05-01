@@ -20,17 +20,18 @@ type Client struct {
 	maxRetries int
 
 	// Resources. Each is a thin wrapper over the same transport.
-	Account   *AccountResource
-	Ping      *PingResource
-	Messages  *MessagesResource
-	Audiences *AudiencesResource
-	Campaigns *CampaignsResource
-	Webhooks  *WebhooksResource
-	Chats     *ChatsResource
-	Contacts  *ContactsResource
-	Groups    *GroupsResource
-	Engines   *EnginesResource
-	Utils     *UtilsResource
+	Account           *AccountResource
+	Ping              *PingResource
+	Messages          *MessagesResource
+	Audiences         *AudiencesResource
+	Campaigns         *CampaignsResource
+	Webhooks          *WebhooksResource
+	Chats             *ChatsResource
+	Contacts          *ContactsResource
+	Groups            *GroupsResource
+	Engines           *EnginesResource
+	Utils             *UtilsResource
+	ScheduledMessages *ScheduledMessagesResource
 }
 
 // Option configures a Client at construction time.
@@ -112,6 +113,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Groups = &GroupsResource{client: c}
 	c.Engines = &EnginesResource{client: c}
 	c.Utils = &UtilsResource{client: c}
+	c.ScheduledMessages = &ScheduledMessagesResource{client: c}
 
 	return c, nil
 }

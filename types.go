@@ -80,6 +80,14 @@ type ContactsPage struct {
 	NextCursor *string   `json:"next_cursor,omitempty"`
 }
 
+// ScheduledMessagesPage is the paginated response from
+// ScheduledMessagesResource.List.
+type ScheduledMessagesPage struct {
+	Data       []ScheduledMessage `json:"data"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor *string            `json:"next_cursor,omitempty"`
+}
+
 // --- Account / Ping ----------------------------------------------------------
 
 // Account is the response from GET /v1/account.
@@ -102,9 +110,23 @@ type Ping struct {
 
 // --- Messages ----------------------------------------------------------------
 
+// Documented values for Message.Status. The wire type is `string` (the OpenAPI
+// schema enumerates these values but Go has no dedicated enum type) — compare
+// the field directly against these constants.
+const (
+	MessageStatusScheduled = "scheduled"
+	MessageStatusQueued    = "queued"
+	MessageStatusSending   = "sending"
+	MessageStatusSent      = "sent"
+	MessageStatusDelivered = "delivered"
+	MessageStatusRead      = "read"
+	MessageStatusFailed    = "failed"
+)
+
 // Message is a message sent via the Blueticks API.
 //
-// Status: scheduled | queued | sending | delivered | failed.
+// Status: scheduled | queued | sending | sent | delivered | read | failed.
+// Compare against the MessageStatus* constants above.
 type Message struct {
 	ID            string `json:"id"`
 	To            string `json:"to"`
@@ -296,10 +318,23 @@ type ChatMessage struct {
 	Filename  string `json:"filename,omitempty"`
 }
 
+// Documented values for ChatMedia.MediaUnavailable. The wire type is `string`
+// (the OpenAPI schema enumerates these values but Go has no dedicated enum
+// type) — compare the field directly against these constants. An empty string
+// means the fetch succeeded (or no fetch was needed).
+const (
+	MediaUnavailableExpired        = "expired"
+	MediaUnavailableFetching       = "fetching"
+	MediaUnavailableAwaitingSender = "awaiting_sender"
+	MediaUnavailableError          = "error"
+	MediaUnavailableNoMedia        = "no_media"
+)
+
 // ChatMedia is the response from GET /v1/chats/{id}/messages/{key}/media.
 //
-// MediaUnavailable is one of: expired | fetching | error | no_media (or empty
-// on success).
+// MediaUnavailable is one of: expired | fetching | awaiting_sender | error |
+// no_media (or empty on success). Compare against the MediaUnavailable*
+// constants above.
 type ChatMedia struct {
 	URL              string `json:"url,omitempty"`
 	Mimetype         string `json:"mimetype,omitempty"`
@@ -342,15 +377,30 @@ type ProfilePicture struct {
 // --- Groups ------------------------------------------------------------------
 
 // Group is a WhatsApp group's metadata.
+//
+// Pointer fields preserve the wire-level null vs. empty distinction (the
+// OpenAPI declares them nullable). nil == "the server returned null"; a
+// non-nil zero value means the field was present but blank / zero.
 type Group struct {
-	ID               string `json:"id"`
-	Name             string `json:"name,omitempty"`
-	Description      string `json:"description,omitempty"`
-	Owner            string `json:"owner,omitempty"`
-	CreatedAt        string `json:"created_at,omitempty"`
-	ParticipantCount int    `json:"participant_count,omitempty"`
-	Announce         bool   `json:"announce,omitempty"`
-	Restrict         bool   `json:"restrict,omitempty"`
+	ID               string             `json:"id"`
+	Name             *string            `json:"name,omitempty"`
+	Description      *string            `json:"description,omitempty"`
+	Owner            *string            `json:"owner,omitempty"`
+	CreatedAt        *string            `json:"created_at,omitempty"`
+	LastMessageAt    *string            `json:"last_message_at,omitempty"`
+	ParticipantCount *int               `json:"participant_count,omitempty"`
+	Announce         *bool              `json:"announce,omitempty"`
+	Restrict         *bool              `json:"restrict,omitempty"`
+	Participants     []GroupParticipant `json:"participants,omitempty"`
+}
+
+// GroupParticipant is a single member of a Group as returned in
+// Group.Participants.
+type GroupParticipant struct {
+	ChatID       string  `json:"chat_id"`
+	IsAdmin      bool    `json:"is_admin"`
+	IsSuperAdmin bool    `json:"is_super_admin"`
+	Name         *string `json:"name,omitempty"`
 }
 
 // CreateGroupParams is the body for GroupsResource.Create.
@@ -363,6 +413,48 @@ type CreateGroupParams struct {
 type UpdateGroupParams struct {
 	Name     string          `json:"name,omitempty"`
 	Settings map[string]bool `json:"settings,omitempty"`
+}
+
+// --- Scheduled messages ------------------------------------------------------
+
+// ScheduledMessage is a one-time or recurring scheduled message returned by
+// /v1/scheduled-messages.
+//
+// All non-id fields are nullable per the OpenAPI schema — pointers preserve
+// the wire-level null vs. empty distinction. Status mirrors Message.Status
+// (compare against the MessageStatus* constants).
+type ScheduledMessage struct {
+	ID             string  `json:"id"`
+	To             *string `json:"to"`
+	Text           *string `json:"text"`
+	MediaURL       *string `json:"media_url"`
+	MediaCaption   *string `json:"media_caption"`
+	MediaFilename  *string `json:"media_filename"`
+	MediaMimeType  *string `json:"media_mime_type"`
+	SendAt         *string `json:"send_at"`
+	Status         *string `json:"status"`
+	IsRecurring    bool    `json:"is_recurring"`
+	RecurrenceRule *string `json:"recurrence_rule"`
+	CreatedAt      *string `json:"created_at"`
+	UpdatedAt      *string `json:"updated_at"`
+}
+
+// ListScheduledMessagesParams is the query-param bundle for
+// ScheduledMessagesResource.List.
+type ListScheduledMessagesParams struct {
+	Limit  int
+	Cursor string
+}
+
+// UpdateScheduledMessageParams is the body for ScheduledMessagesResource.Update.
+//
+// All fields are optional; omit (leave nil / zero) any you don't want to
+// change.
+type UpdateScheduledMessageParams struct {
+	Text         *string `json:"text,omitempty"`
+	MediaURL     *string `json:"media_url,omitempty"`
+	MediaCaption *string `json:"media_caption,omitempty"`
+	SendAt       *string `json:"send_at,omitempty"`
 }
 
 // --- Engines -----------------------------------------------------------------

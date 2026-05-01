@@ -5,6 +5,37 @@ All notable changes to the Blueticks Go SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.0 — 2026-05-01
+
+### Added
+
+- New `ScheduledMessages` resource backing `/v1/scheduled-messages`:
+  `List`, `Retrieve`, `Update`, `Delete`. Plus `ScheduledMessage`,
+  `ScheduledMessagesPage`, `ListScheduledMessagesParams`,
+  `UpdateScheduledMessageParams` types.
+- `Group` gains `LastMessageAt *string` and `Participants []GroupParticipant`
+  (returned when the engine includes participant data).
+- New `GroupParticipant` type for the `Group.Participants` array.
+- `ChatMedia.MediaUnavailable` enum gains `"awaiting_sender"` (WA's CDN
+  asked the sender's device to reupload — caller should not poll, the
+  sender's app must open). New `MediaUnavailable*` const block documents
+  the full enum.
+- `Message.Status` enum gains `"read"` and `"sent"`. New `MessageStatus*`
+  const block documents the full enum.
+
+### Changed (semver-minor on the type level, but additive at runtime)
+
+- `Group` nullable fields migrated to pointers to match the v1.0.1
+  policy (preserve null vs empty distinction):
+  - `Name`, `Description`, `Owner`, `CreatedAt`: `string` → `*string`
+  - `ParticipantCount`: `int` → `*int`
+  - `Announce`, `Restrict`: `bool` → `*bool`
+
+  Previously these collapsed `null`, `""`, and `0` into the same zero
+  value, hiding the wire distinction. Code that read these fields
+  directly will need to deref / nil-check; code that round-tripped via
+  JSON keeps working unchanged.
+
 ## v1.0.1 — 2026-04-30
 
 ### Changed (semver-minor on the type level, but additive at runtime)
