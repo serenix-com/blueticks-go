@@ -1,0 +1,82 @@
+name: Publish
+
+# Go is published via tag-push only — `pkg.go.dev` and `proxy.golang.org`
+# auto-discover any new git tag matching `v*` on a public module and
+# index it. There's no separate registry to upload to.
+#
+# This workflow does three things:
+#   1. Verifies the tag matches the `Version` constant in version.go.
+#   2. Runs the full quality gates (gofmt / vet / build / test) against
+#      the tagged commit, so a bad tag fails loudly here rather than at
+#      `go install` time on someone's machine.
+#   3. Warms the Go module proxy by issuing a `?go-get=1` request against
+#      the new tag. Skipping this leaves first-time `go get` callers
+#      waiting on cold-cache resolution for up to 30 minutes.
+#   4. Creates a GitHub Release with auto-generated notes.
+#
+# No registry secret is required.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # for the GitHub Release step
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Verify tag matches Version constant
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          GO_VERSION="$(grep -E 'Version\s*=' version.go | head -1 | cut -d'"' -f2)"
+          if [ "$TAG_VERSION" != "$GO_VERSION" ]; then
+            echo "::error::tag '$GITHUB_REF_NAME' does not match Version ('$GO_VERSION')"
+            exit 1
+          fi
+          echo "Tag matches version: $GO_VERSION"
+
+      - name: gofmt
+        run: |
+          fmt_out="$(gofmt -l .)"
+          if [ -n "$fmt_out" ]; then
+            echo "::error::gofmt would reformat:"
+            echo "$fmt_out"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: go test
+        run: go test ./...
+
+      - name: Warm Go module proxy
+        run: |
+          MODULE="$(awk '/^module / {print $2}' go.mod)"
+          # The Go proxy populates the cache on first request. Issue an HTTP
+          # GET against the tagged version to trigger indexing — pkg.go.dev
+          # picks up the result within a few minutes instead of 30+.
+          curl -fsSL "https://proxy.golang.org/${MODULE}/@v/${GITHUB_REF_NAME}.info" \
+            && echo "Proxy primed for ${MODULE}@${GITHUB_REF_NAME}" \
+            || echo "::warning::proxy warm-up failed (non-fatal — pkg.go.dev will index lazily)"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
