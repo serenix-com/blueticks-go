@@ -114,6 +114,9 @@ func TestChatsActions(t *testing.T) {
 	if err != nil || len(bm.Data) != 1 {
 		t.Fatalf("BatchMessageAcks: %v %+v", err, bm)
 	}
+	if bm.Data[0].Key != "k1" || bm.Data[0].Ack == nil || *bm.Data[0].Ack != 3 {
+		t.Fatalf("BatchMessageAcks entry: %+v", bm.Data[0])
+	}
 }
 
 // TestChatsDecodesEmptyTypedResponses locks in encoding/json's lenient

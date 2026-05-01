@@ -399,13 +399,19 @@ type BatchMessageAcksParams struct {
 	MessageKeys []string `json:"message_keys"`
 }
 
-// BatchMessageAcksResponse is the response from POST /v1/chats/message_acks.
+// BatchMessageAckEntry is a single per-message ack envelope inside
+// BatchMessageAcksResponse.Data.
 //
-// Each Data entry is a free-form per-message ack envelope (the server permits
-// additional properties, so the SDK keeps the entry as a map for forward
-// compatibility).
+// Ack semantics mirror MessageAck.Ack: -1=error, 0=pending, 1=server,
+// 2=device, 3=read, 4=played; nil when no engine response was available.
+type BatchMessageAckEntry struct {
+	Key string `json:"key"`
+	Ack *int   `json:"ack"`
+}
+
+// BatchMessageAcksResponse is the response from POST /v1/chats/message_acks.
 type BatchMessageAcksResponse struct {
-	Data []map[string]interface{} `json:"data"`
+	Data []BatchMessageAckEntry `json:"data"`
 }
 
 // --- Contacts ----------------------------------------------------------------
@@ -544,4 +550,13 @@ type LinkPreview struct {
 // DeletedRef is the typical {"id": "..."} envelope returned by DELETE endpoints.
 type DeletedRef struct {
 	ID string `json:"id"`
+}
+
+// DeletedResource is the {"id": "...", "deleted": true} envelope returned by
+// soft-delete endpoints (audiences, scheduled-messages, webhooks). The
+// `deleted` flag is always true on a successful response — its presence
+// distinguishes a delete confirmation from a regular resource fetch.
+type DeletedResource struct {
+	ID      string `json:"id"`
+	Deleted bool   `json:"deleted"`
 }

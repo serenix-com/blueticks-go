@@ -104,13 +104,20 @@ func (r *AudiencesResource) Update(ctx context.Context, id string, params Update
 	return out, nil
 }
 
-// Delete an audience.
-func (r *AudiencesResource) Delete(ctx context.Context, id string) error {
-	_, err := r.client.do(ctx, requestOptions{
+// Delete an audience. Returns the deleted ref ({id, deleted: true}).
+func (r *AudiencesResource) Delete(ctx context.Context, id string) (*DeletedResource, error) {
+	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
 		path:   "/v1/audiences/" + url.PathEscape(id),
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	out := &DeletedResource{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // AppendContacts adds contacts to an existing audience and returns the

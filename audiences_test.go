@@ -32,7 +32,7 @@ func TestAudiencesListGetUpdateDelete(t *testing.T) {
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/audiences/aud_1":
 			jsonResponse(w, `{"id":"aud_1","name":"V2","contact_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/audiences/aud_1":
-			w.WriteHeader(http.StatusNoContent)
+			jsonResponse(w, `{"id":"aud_1","deleted":true}`)
 		default:
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
@@ -51,8 +51,12 @@ func TestAudiencesListGetUpdateDelete(t *testing.T) {
 	if got.Name != "V2" {
 		t.Fatalf("unexpected name: %q", got.Name)
 	}
-	if err := c.Audiences.Delete(ctx, "aud_1"); err != nil {
+	del, err := c.Audiences.Delete(ctx, "aud_1")
+	if err != nil {
 		t.Fatalf("Delete: %v", err)
+	}
+	if del.ID != "aud_1" || !del.Deleted {
+		t.Fatalf("unexpected delete ref: %+v", del)
 	}
 }
 

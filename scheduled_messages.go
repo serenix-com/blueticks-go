@@ -78,9 +78,9 @@ func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, param
 
 // Delete (cancel) a scheduled message.
 //
-// Removes the resource with id. Returns the canceled scheduled message as it
-// stood at the moment of cancellation.
-func (r *ScheduledMessagesResource) Delete(ctx context.Context, id string) (*ScheduledMessage, error) {
+// Cancels a queued scheduled message before it fires. Returns the deleted
+// ref ({id, deleted: true}).
+func (r *ScheduledMessagesResource) Delete(ctx context.Context, id string) (*DeletedResource, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
 		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
@@ -88,7 +88,7 @@ func (r *ScheduledMessagesResource) Delete(ctx context.Context, id string) (*Sch
 	if err != nil {
 		return nil, err
 	}
-	out := &ScheduledMessage{}
+	out := &DeletedResource{}
 	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}

@@ -94,13 +94,22 @@ func (r *WebhooksResource) Update(ctx context.Context, id string, params UpdateW
 	return out, nil
 }
 
-// Delete removes a webhook subscription.
-func (r *WebhooksResource) Delete(ctx context.Context, id string) error {
-	_, err := r.client.do(ctx, requestOptions{
+// Delete removes a webhook subscription. The server returns the
+// standard {id, deleted: true} envelope; align with audiences and
+// scheduled-messages so callers can treat all DELETE returns uniformly.
+func (r *WebhooksResource) Delete(ctx context.Context, id string) (*DeletedResource, error) {
+	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
 		path:   "/v1/webhooks/" + url.PathEscape(id),
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	out := &DeletedResource{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // RotateSecret invalidates the current signing secret and returns a new

@@ -69,14 +69,14 @@ func TestScheduledMessagesDelete(t *testing.T) {
 		if r.Method != http.MethodDelete || r.URL.Path != "/v1/scheduled-messages/sm_1" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"id":"sm_1","to":"+1","text":"hi","media_url":null,"media_caption":null,"media_filename":null,"media_mime_type":null,"send_at":"2026-01-02T00:00:00Z","status":"canceled","is_recurring":false,"recurrence_rule":null,"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}`)
+		jsonResponse(w, `{"id":"sm_1","deleted":true}`)
 	})
 	got, err := c.ScheduledMessages.Delete(context.Background(), "sm_1")
 	if err != nil {
 		t.Fatalf("Delete: %v", err)
 	}
-	if got.ID != "sm_1" {
-		t.Fatalf("unexpected id: %q", got.ID)
+	if got.ID != "sm_1" || !got.Deleted {
+		t.Fatalf("unexpected delete ref: %+v", got)
 	}
 }
 

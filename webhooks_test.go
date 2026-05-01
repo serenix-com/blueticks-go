@@ -18,7 +18,7 @@ func TestWebhooksFlow(t *testing.T) {
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/webhooks/wh_1":
 			jsonResponse(w, `{"id":"wh_1","url":"https://y","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/webhooks/wh_1":
-			w.WriteHeader(http.StatusNoContent)
+			jsonResponse(w, `{"id":"wh_1","deleted":true}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/webhooks/wh_1/rotate-secret":
 			jsonResponse(w, `{"id":"wh_1","url":"https://x","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z","secret":"whsec_new"}`)
 		default:
@@ -42,8 +42,10 @@ func TestWebhooksFlow(t *testing.T) {
 	if _, err := c.Webhooks.Update(ctx, "wh_1", UpdateWebhookParams{URL: "https://y"}); err != nil {
 		t.Fatalf("Update: %v", err)
 	}
-	if err := c.Webhooks.Delete(ctx, "wh_1"); err != nil {
+	if del, err := c.Webhooks.Delete(ctx, "wh_1"); err != nil {
 		t.Fatalf("Delete: %v", err)
+	} else if del == nil || del.ID != "wh_1" || !del.Deleted {
+		t.Fatalf("Delete: unexpected envelope %+v", del)
 	}
 	rot, err := c.Webhooks.RotateSecret(ctx, "wh_1")
 	if err != nil {
