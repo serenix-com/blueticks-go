@@ -5,14 +5,17 @@ import (
 	"net/http"
 )
 
-// PingResource exposes /v1/ping. The ping endpoint is a low-cost health
-// check that also returns metadata about the calling API key (key prefix,
-// scopes, account id) — useful for sanity-checking auth at boot time.
+// PingResource exposes /v1/ping.
 type PingResource struct {
 	client *Client
 }
 
-// Retrieve returns key metadata for the authenticated API key.
+// Retrieve probes the API: returns the account ID, key prefix, and granted scopes
+// for the authenticated API key.
+//
+// Probe the API: returns the account ID, key prefix, and granted scopes for
+// the authenticated API key. Useful as a connection test and to inspect what
+// an integration is allowed to do. No scope required.
 func (r *PingResource) Retrieve(ctx context.Context) (*Ping, error) {
 	body, err := r.client.do(ctx, requestOptions{method: http.MethodGet, path: "/v1/ping"})
 	if err != nil {

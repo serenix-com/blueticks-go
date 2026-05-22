@@ -6,37 +6,25 @@ import (
 	"testing"
 )
 
-func TestEnginesAll(t *testing.T) {
+func TestEnginesStatus(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/v1/engines":
-			jsonResponse(w, `{"connected":true,"state":"CONNECTED"}`)
-		case r.Method == http.MethodGet && r.URL.Path == "/v1/engines/me":
-			jsonResponse(w, `{"phone":"+1","name":"Bot","platform":"web"}`)
-		case r.Method == http.MethodPost && r.URL.Path == "/v1/engines/logout":
-			jsonResponse(w, `{"ok":true}`)
-		case r.Method == http.MethodPost && r.URL.Path == "/v1/engines/reload":
-			jsonResponse(w, `{"ok":true}`)
-		default:
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/engines" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
+		jsonResponse(w, `{"connected":true,"state":"CONNECTED"}`)
 	})
-	ctx := context.Background()
-	st, err := c.Engines.Status(ctx)
+	st, err := c.Engines.Status(context.Background())
 	if err != nil {
 		t.Fatalf("Status: %v", err)
 	}
 	if !st.Connected {
 		t.Fatalf("expected connected")
 	}
-	if _, err := c.Engines.Me(ctx); err != nil {
-		t.Fatalf("Me: %v", err)
-	}
-	if _, err := c.Engines.Logout(ctx); err != nil {
-		t.Fatalf("Logout: %v", err)
-	}
-	if _, err := c.Engines.Reload(ctx); err != nil {
-		t.Fatalf("Reload: %v", err)
+}
+
+func TestEnginesDecodeEmptyResponse(t *testing.T) {
+	if err := decodeJSON([]byte(`{}`), &EngineStatus{}); err != nil {
+		t.Fatalf("EngineStatus empty decode: %v", err)
 	}
 }
 

@@ -22,19 +22,9 @@ func TestContactsList(t *testing.T) {
 	}
 }
 
-func TestContactsGetProfilePicture(t *testing.T) {
-	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/contacts/c1@c.us/profile_picture" {
-			t.Errorf("unexpected: %s", r.URL.Path)
-		}
-		jsonResponse(w, `{"url":"https://cdn/x.jpg"}`)
-	})
-	got, err := c.Contacts.GetProfilePicture(context.Background(), "c1@c.us")
-	if err != nil {
-		t.Fatalf("GetProfilePicture: %v", err)
-	}
-	if got.URL == "" {
-		t.Fatalf("expected URL, got empty")
+func TestContactsDecodeEmptyResponse(t *testing.T) {
+	if err := decodeJSON([]byte(`{}`), &Contact{}); err != nil {
+		t.Fatalf("Contact empty decode: %v", err)
 	}
 }
 

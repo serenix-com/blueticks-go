@@ -88,7 +88,30 @@ type ScheduledMessagesPage struct {
 	NextCursor *string            `json:"next_cursor,omitempty"`
 }
 
-// --- Account / Ping ----------------------------------------------------------
+// GroupsPage is the paginated response from GroupsResource.List.
+type GroupsPage struct {
+	Data       []Group `json:"data"`
+	HasMore    bool    `json:"has_more"`
+	NextCursor *string `json:"next_cursor,omitempty"`
+}
+
+// NewslettersPage is the paginated response from NewslettersResource.List.
+type NewslettersPage struct {
+	Data       []Newsletter `json:"data"`
+	HasMore    bool         `json:"has_more"`
+	NextCursor *string      `json:"next_cursor,omitempty"`
+}
+
+// --- Ping --------------------------------------------------------------------
+
+// Ping is the response from GET /v1/ping.
+type Ping struct {
+	AccountID string   `json:"account_id"`
+	KeyPrefix string   `json:"key_prefix"`
+	Scopes    []string `json:"scopes"`
+}
+
+// --- Account -----------------------------------------------------------------
 
 // Account is the response from GET /v1/account.
 //
@@ -99,13 +122,6 @@ type Account struct {
 	Name      string  `json:"name"`
 	Timezone  *string `json:"timezone,omitempty"`
 	CreatedAt string  `json:"created_at"`
-}
-
-// Ping is the response from GET /v1/ping.
-type Ping struct {
-	AccountID string   `json:"account_id"`
-	KeyPrefix string   `json:"key_prefix"`
-	Scopes    []string `json:"scopes"`
 }
 
 // --- Messages ----------------------------------------------------------------
@@ -123,35 +139,178 @@ const (
 	MessageStatusFailed    = "failed"
 )
 
+// Documented values for Message.Type. The wire type is `string`.
+const (
+	MessageTypeText  = "text"
+	MessageTypeMedia = "media"
+	MessageTypePoll  = "poll"
+)
+
+// MessageLinkPreview is the optional rich-preview card embedded in a Message.
+//
+// All fields are nullable on the wire — nil means the server returned null.
+type MessageLinkPreview struct {
+	Title        *string `json:"title"`
+	Description  *string `json:"description"`
+	CanonicalURL *string `json:"canonical_url"`
+	Thumbnail    *string `json:"thumbnail"`
+}
+
 // Message is a message sent via the Blueticks API.
 //
-// Status: scheduled | queued | sending | sent | delivered | read | failed.
-// Compare against the MessageStatus* constants above.
+// Type: text | media | poll. Compare against the MessageType* constants above.
+// Status: scheduled | queued | sending | delivered | read | failed. Compare
+// against the MessageStatus* constants above.
+//
+// Nullable fields use pointer types — nil means the server returned null
+// (not absent).
 type Message struct {
-	ID            string `json:"id"`
-	To            string `json:"to"`
-	From          string `json:"from,omitempty"`
-	Text          string `json:"text,omitempty"`
-	MediaURL      string `json:"media_url,omitempty"`
-	Status        string `json:"status"`
-	SendAt        string `json:"send_at,omitempty"`
-	CreatedAt     string `json:"created_at"`
-	SentAt        string `json:"sent_at,omitempty"`
-	DeliveredAt   string `json:"delivered_at,omitempty"`
-	ReadAt        string `json:"read_at,omitempty"`
-	FailedAt      string `json:"failed_at,omitempty"`
-	FailureReason string `json:"failure_reason,omitempty"`
+	ID            string              `json:"id"`
+	Key           *string             `json:"key"`
+	To            string              `json:"to"`
+	From          *string             `json:"from"`
+	Type          string              `json:"type"`
+	Text          *string             `json:"text"`
+	MediaURL      *string             `json:"media_url"`
+	MediaKind     *string             `json:"media_kind"`
+	PollQuestion  *string             `json:"poll_question"`
+	Status        string              `json:"status"`
+	SendAt        *string             `json:"send_at"`
+	CreatedAt     string              `json:"created_at"`
+	SentAt        *string             `json:"sent_at"`
+	DeliveredAt   *string             `json:"delivered_at"`
+	ReadAt        *string             `json:"read_at"`
+	FailedAt      *string             `json:"failed_at"`
+	FailureReason *string             `json:"failure_reason"`
+	LinkPreview   *MessageLinkPreview `json:"link_preview"`
+}
+
+// SendMessageTextParams is the request body for sending a text message.
+//
+// Set Type to "text" (MessageTypeText). Text is required (1–4096 chars).
+// LinkPreview controls the rich-preview card: true (default) = auto-fetch,
+// false = never attach, or a SendLinkPreviewParams object for a custom card.
+type SendMessageTextParams struct {
+	Type        string      `json:"type"`
+	To          string      `json:"to"`
+	Text        string      `json:"text"`
+	LinkPreview interface{} `json:"link_preview,omitempty"`
+	SendAt      string      `json:"send_at,omitempty"`
+	From        string      `json:"from,omitempty"`
+	ReplyTo     string      `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
+	IdempotencyKey string `json:"-"`
+}
+
+// SendMessageMediaParams is the request body for sending a media message.
+//
+// Set Type to "media" (MessageTypeMedia). Media.URL is required.
+type SendMessageMediaParams struct {
+	Type    string          `json:"type"`
+	To      string          `json:"to"`
+	Media   SendMediaObject `json:"media"`
+	SendAt  string          `json:"send_at,omitempty"`
+	From    string          `json:"from,omitempty"`
+	ReplyTo string          `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
+	IdempotencyKey string `json:"-"`
+}
+
+// SendMediaObject is the nested media descriptor in SendMessageMediaParams.
+type SendMediaObject struct {
+	URL      string `json:"url"`
+	Kind     string `json:"kind,omitempty"`
+	Caption  string `json:"caption,omitempty"`
+	Filename string `json:"filename,omitempty"`
+}
+
+// SendMessagePollParams is the request body for sending a poll message.
+//
+// Set Type to "poll" (MessageTypePoll). Poll.Question and Poll.Options are required.
+type SendMessagePollParams struct {
+	Type    string         `json:"type"`
+	To      string         `json:"to"`
+	Poll    SendPollObject `json:"poll"`
+	SendAt  string         `json:"send_at,omitempty"`
+	From    string         `json:"from,omitempty"`
+	ReplyTo string         `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
+	IdempotencyKey string `json:"-"`
+}
+
+// SendPollObject is the nested poll descriptor in SendMessagePollParams.
+type SendPollObject struct {
+	Question      string   `json:"question"`
+	Options       []string `json:"options"`
+	AllowMultiple bool     `json:"allow_multiple,omitempty"`
 }
 
 // SendMessageParams is the request body for MessagesResource.Send.
+//
+// The /v1/messages POST body is a discriminated union on the `type` field.
+// Construct using one of the convenience helpers:
+//
+//	params := blueticks.NewTextMessage("+15551234567", "hello")
+//	params := blueticks.NewMediaMessage("+15551234567", blueticks.SendMediaObject{URL: "https://..."})
+//	params := blueticks.NewPollMessage("+15551234567", blueticks.SendPollObject{Question: "Q?", Options: []string{"A","B"}})
+//
+// Or build the struct directly — the server validates the type/variant pair.
 type SendMessageParams struct {
-	To             string `json:"to"`
-	Text           string `json:"text,omitempty"`
-	MediaURL       string `json:"media_url,omitempty"`
-	MediaCaption   string `json:"media_caption,omitempty"`
-	SendAt         string `json:"send_at,omitempty"`
-	From           string `json:"from,omitempty"`
+	// Type is the discriminator: "text", "media", or "poll".
+	Type string `json:"type"`
+	To   string `json:"to"`
+	// Text is required when Type == "text".
+	Text string `json:"text,omitempty"`
+	// LinkPreview is optional when Type == "text".
+	// true (default) = auto-fetch; false = never attach; object = custom card.
+	LinkPreview interface{} `json:"link_preview,omitempty"`
+	// Media is required when Type == "media".
+	Media *SendMediaObject `json:"media,omitempty"`
+	// Poll is required when Type == "poll".
+	Poll    *SendPollObject `json:"poll,omitempty"`
+	SendAt  string          `json:"send_at,omitempty"`
+	From    string          `json:"from,omitempty"`
+	ReplyTo string          `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
+}
+
+// --- Newsletters -------------------------------------------------------------
+
+// Documented values for Newsletter.Verification. The wire type is `string`.
+const (
+	NewsletterVerificationVerified   = "VERIFIED"
+	NewsletterVerificationUnverified = "UNVERIFIED"
+)
+
+// Newsletter is the response from POST /v1/newsletters, GET /v1/newsletters,
+// and GET /v1/newsletters/{id}.
+//
+// Pointer fields (Description, Owner, CreatedAt, Subscribers, Invite,
+// Verification) are nullable on the wire — nil means the server returned null.
+type Newsletter struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description"`
+	Owner        *string `json:"owner"`
+	CreatedAt    *string `json:"created_at"`
+	Subscribers  *int    `json:"subscribers"`
+	Invite       *string `json:"invite"`
+	Verification *string `json:"verification"`
+}
+
+// CreateNewsletterParams is the request body for NewslettersResource.Create.
+//
+// Name is required (1–100 chars). Description is optional (max 2048 chars).
+type CreateNewsletterParams struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+}
+
+// ListNewslettersParams is the query-param bundle for NewslettersResource.List.
+type ListNewslettersParams struct {
+	Limit  int
+	Cursor string
 }
 
 // --- Audiences ---------------------------------------------------------------
@@ -423,11 +582,6 @@ type Contact struct {
 	IsBusiness bool   `json:"is_business"`
 }
 
-// ProfilePicture is the response from GET /v1/contacts/{chat_id}/profile_picture.
-type ProfilePicture struct {
-	URL string `json:"url,omitempty"`
-}
-
 // --- Groups ------------------------------------------------------------------
 
 // Group is a WhatsApp group's metadata.
@@ -519,30 +673,6 @@ type EngineStatus struct {
 	State     string `json:"state,omitempty"`
 	Stream    string `json:"stream,omitempty"`
 	HasSynced *bool  `json:"has_synced,omitempty"`
-}
-
-// WhatsAppMe is the authenticated WhatsApp account profile from
-// GET /v1/engines/me.
-type WhatsAppMe struct {
-	Phone    string `json:"phone,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Platform string `json:"platform,omitempty"`
-}
-
-// --- Utils -------------------------------------------------------------------
-
-// PhoneValidation is the response from POST /v1/utils/validate_phone.
-type PhoneValidation struct {
-	Valid           bool   `json:"valid"`
-	FormattedChatID string `json:"formatted_chat_id,omitempty"`
-}
-
-// LinkPreview is the response from GET /v1/utils/link_preview.
-type LinkPreview struct {
-	Title        string `json:"title,omitempty"`
-	Description  string `json:"description,omitempty"`
-	Thumbnail    string `json:"thumbnail,omitempty"`
-	CanonicalURL string `json:"canonical_url,omitempty"`
 }
 
 // --- ID-only delete envelope -------------------------------------------------

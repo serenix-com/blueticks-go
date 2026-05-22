@@ -39,6 +39,36 @@ produces must follow these rules.
 - `.github/workflows/**`
 - `CLAUDE.md` (this file)
 
+## Spec coverage audit (REQUIRED before completion)
+
+Before producing your final diff, you MUST perform this audit. A regenerated SDK that's missing an op or resource that's in the spec is a P0 bug — it's invisible to every downstream caller until someone notices in production. Do not skip this step.
+
+### Step 1: enumerate every spec operation
+
+Read every path in `openapi.json` under `paths` and every method (`get`/`post`/`put`/`patch`/`delete`) for each path. List them in the form `<HTTP_VERB> <path>` (e.g., `POST /v1/newsletters`).
+
+### Step 2: map each operation to the expected SDK method
+
+Using the Method-name mapping table elsewhere in this document, derive the expected `<resource>.<method>` for each spec op. The resource is the first path segment after `/v1/`. The method name follows the verb table.
+
+### Step 3: confirm coverage
+
+For each `<resource>.<method>` you derived:
+
+- If the resource file does NOT exist (e.g. spec has `/v1/newsletters` but no resource file), **CREATE the file** following the structure below + wire it into the SDK entrypoint (create `<resource>.go` at module root, add the resource field to `Client` struct in `client.go` (only inside REGEN-BOUNDARY regions)).
+- If the resource file exists but lacks the method, **ADD the method**.
+- If a method exists for an operation that's NOT in the spec, **delete it** (the backend has removed the endpoint).
+
+### Step 4: report
+
+In your final summary, include a line:
+
+```
+Coverage audit: enumerated N spec ops; M already covered; K added; L deleted; 0 missing.
+```
+
+The trailing `0 missing` is the gate. If the audit ends with anything other than `0 missing`, fix it before you finish.
+
 ## 2. Types (OpenAPI schema → Go struct)
 
 All response / request DTOs live in **one file**, `types.go`. Group them by

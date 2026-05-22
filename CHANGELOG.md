@@ -5,6 +5,58 @@ All notable changes to the Blueticks Go SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.2.0 — 2026-05-22
+
+OpenAPI parity pass. The SDK now matches `backend/openapi.json`
+operation-for-operation; an engineless drift check
+(`.github/workflows/sdk-spec-drift.yml`) gates future regressions. The
+`/v1/*` surface is pre-release — none of these changes affect production
+callers yet.
+
+### Changed
+
+- `Messages.Send` now takes the discriminated body shape matching the
+  backend's strict `anyOf` (BE#50). `SendMessageParams` accepts all variant
+  fields; caller sets `Type` to one of `MessageTypeText` / `MessageTypeMedia`
+  / `MessageTypePoll`:
+  ```go
+  c.Messages.Send(ctx, blueticks.SendMessageParams{
+      To: "+1...", Type: blueticks.MessageTypeText, Text: ptr.String("hi"),
+  })
+  c.Messages.Send(ctx, blueticks.SendMessageParams{
+      To: "+1...", Type: blueticks.MessageTypeMedia,
+      Media: &blueticks.SendMediaObject{URL: "...", Kind: "image"},
+  })
+  c.Messages.Send(ctx, blueticks.SendMessageParams{
+      To: "+1...", Type: blueticks.MessageTypePoll,
+      Poll: &blueticks.SendPollObject{Question: "...", Options: []string{...}},
+  })
+  ```
+  Explicit typed convenience structs (`SendMessageTextParams`,
+  `SendMessageMediaParams`, `SendMessagePollParams`) are also available.
+- `Newsletter` struct: 3 fields → 8 fields matching the spec (`ID`, `Name`,
+  `Description *string`, `Owner *string`, `CreatedAt *string`,
+  `Subscribers *int`, `Invite *string`, `Verification *string`).
+- `CreateNewsletterParams.Description` is now `*string` (was `string`), to
+  distinguish "absent" from the empty string.
+
+### Added
+
+- `Newsletters.List(ctx, ListNewslettersParams)` — `GET /v1/newsletters` (returns `*NewslettersPage`)
+- `Newsletters.Retrieve(ctx, id)` — `GET /v1/newsletters/{id}`
+- `Newsletters.Create(ctx, CreateNewsletterParams)` — now returns typed `*Newsletter`
+- `Ping.Retrieve(ctx)` — typed `*Ping` (`AccountID`, `KeyPrefix`, `Scopes`).
+  The `ping` resource had been deleted in a prior interim regen; restored here.
+- `Groups.List` — `GET /v1/groups` (was documented but absent for ~9 days)
+- `Message` now exposes `Key *string`, `Type string`, `MediaKind *string`,
+  `PollQuestion *string`, `LinkPreview *MessageLinkPreview`
+
+### Removed
+
+- `Engines.Me`, `Engines.Logout`, `Engines.Reload`
+- `Contacts.GetProfilePicture`
+- `Utils.ValidatePhone`, `Utils.LinkPreview`
+
 ## v1.1.0 — 2026-05-01
 
 ### Added

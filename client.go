@@ -20,8 +20,8 @@ type Client struct {
 	maxRetries int
 
 	// Resources. Each is a thin wrapper over the same transport.
-	Account           *AccountResource
 	Ping              *PingResource
+	Account           *AccountResource
 	Messages          *MessagesResource
 	Audiences         *AudiencesResource
 	Campaigns         *CampaignsResource
@@ -30,7 +30,7 @@ type Client struct {
 	Contacts          *ContactsResource
 	Groups            *GroupsResource
 	Engines           *EnginesResource
-	Utils             *UtilsResource
+	Newsletters       *NewslettersResource
 	ScheduledMessages *ScheduledMessagesResource
 }
 
@@ -102,8 +102,8 @@ func NewClient(opts ...Option) (*Client, error) {
 		c.userAgent = "blueticks-go/" + Version
 	}
 
-	c.Account = &AccountResource{client: c}
 	c.Ping = &PingResource{client: c}
+	c.Account = &AccountResource{client: c}
 	c.Messages = &MessagesResource{client: c}
 	c.Audiences = &AudiencesResource{client: c}
 	c.Campaigns = &CampaignsResource{client: c}
@@ -112,7 +112,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Contacts = &ContactsResource{client: c}
 	c.Groups = &GroupsResource{client: c}
 	c.Engines = &EnginesResource{client: c}
-	c.Utils = &UtilsResource{client: c}
+	c.Newsletters = &NewslettersResource{client: c}
 	c.ScheduledMessages = &ScheduledMessagesResource{client: c}
 
 	return c, nil

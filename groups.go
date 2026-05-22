@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 // GroupsResource exposes /v1/groups.
@@ -16,6 +17,13 @@ type AddMemberParams struct {
 	ChatID string `json:"chat_id"`
 }
 
+// ListGroupsParams is the query-param bundle for GroupsResource.List.
+type ListGroupsParams struct {
+	Limit  int
+	Cursor string
+	Q      string // case-insensitive substring match against group name
+}
+
 // SetGroupPictureParams is the body for GroupsResource.SetPicture.
 //
 // FileDataURL is required and must be a `data:<mime>;base64,<data>` URL.
@@ -23,6 +31,36 @@ type SetGroupPictureParams struct {
 	FileDataURL  string `json:"file_data_url"`
 	FileName     string `json:"file_name,omitempty"`
 	FileMimeType string `json:"file_mime_type,omitempty"`
+}
+
+// List the groups the connected WhatsApp engine sees.
+//
+// Supports cursor pagination (Limit + Cursor) and an optional case-insensitive
+// substring search on the group name via Q.
+func (r *GroupsResource) List(ctx context.Context, params ListGroupsParams) (*GroupsPage, error) {
+	q := url.Values{}
+	if params.Limit > 0 {
+		q.Set("limit", strconv.Itoa(params.Limit))
+	}
+	if params.Cursor != "" {
+		q.Set("cursor", params.Cursor)
+	}
+	if params.Q != "" {
+		q.Set("q", params.Q)
+	}
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodGet,
+		path:   "/v1/groups",
+		query:  q,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &GroupsPage{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // Create a new WhatsApp group with the given participants.

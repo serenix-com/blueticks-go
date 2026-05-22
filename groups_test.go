@@ -6,6 +6,32 @@ import (
 	"testing"
 )
 
+func TestGroupsList(t *testing.T) {
+	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"created_at":null,"last_message_at":null,"participant_count":2,"announce":null,"restrict":null,"participants":[]}`
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/groups" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		if got := r.URL.Query().Get("limit"); got != "10" {
+			t.Errorf("limit query: %q", got)
+		}
+		jsonResponse(w, `{"data":[`+groupBody+`],"has_more":false}`)
+	})
+	got, err := c.Groups.List(context.Background(), ListGroupsParams{Limit: 10})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got.Data) != 1 || got.Data[0].ID != "g_1" || got.HasMore {
+		t.Fatalf("unexpected page: %+v", got)
+	}
+}
+
+func TestGroupsListUnauthorized(t *testing.T) {
+	c, _ := newTestServer(t, unauthorizedHandler)
+	_, err := c.Groups.List(context.Background(), ListGroupsParams{})
+	expectAuthError(t, err)
+}
+
 func TestGroupsCRUD(t *testing.T) {
 	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"created_at":null,"last_message_at":null,"participant_count":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
