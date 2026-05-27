@@ -11,7 +11,7 @@ import (
 //
 //	c, err := blueticks.NewClient(blueticks.WithAPIKey("sk_..."))
 //	if err != nil { ... }
-//	msg, err := c.Messages.Send(ctx, blueticks.SendMessageParams{To: "+15555550100", Text: "hi"})
+//	msg, err := c.ScheduledMessages.Create(ctx, blueticks.CreateScheduledMessageParams{Type: blueticks.MessageTypeText, To: "+15555550100", Text: "hi"})
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -22,7 +22,6 @@ type Client struct {
 	// Resources. Each is a thin wrapper over the same transport.
 	Ping              *PingResource
 	Account           *AccountResource
-	Messages          *MessagesResource
 	Audiences         *AudiencesResource
 	Campaigns         *CampaignsResource
 	Webhooks          *WebhooksResource
@@ -104,7 +103,6 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	c.Ping = &PingResource{client: c}
 	c.Account = &AccountResource{client: c}
-	c.Messages = &MessagesResource{client: c}
 	c.Audiences = &AudiencesResource{client: c}
 	c.Campaigns = &CampaignsResource{client: c}
 	c.Webhooks = &WebhooksResource{client: c}

@@ -12,7 +12,30 @@ type ScheduledMessagesResource struct {
 	client *Client
 }
 
-// List scheduled messages.
+// Send message.
+//
+// Creates (and optionally schedules) a message. Pass an IdempotencyKey on
+// the request to make this call safe to retry — the key is sent as the
+// `Idempotency-Key` header and the server short-circuits duplicate calls
+// within its replay window.
+func (r *ScheduledMessagesResource) Create(ctx context.Context, params CreateScheduledMessageParams) (*ScheduledMessage, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method:         http.MethodPost,
+		path:           "/v1/scheduled-messages",
+		body:           params,
+		idempotencyKey: params.IdempotencyKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &ScheduledMessage{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// List messages.
 //
 // Retrieves a list of all resources from the service. Cursor-paginated.
 func (r *ScheduledMessagesResource) List(ctx context.Context, params ListScheduledMessagesParams) (*ScheduledMessagesPage, error) {
@@ -22,6 +45,15 @@ func (r *ScheduledMessagesResource) List(ctx context.Context, params ListSchedul
 	}
 	if params.Cursor != "" {
 		q.Set("cursor", params.Cursor)
+	}
+	if params.ChatID != "" {
+		q.Set("chat_id", params.ChatID)
+	}
+	if params.Status != "" {
+		q.Set("status", params.Status)
+	}
+	if params.Q != "" {
+		q.Set("q", params.Q)
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -38,7 +70,7 @@ func (r *ScheduledMessagesResource) List(ctx context.Context, params ListSchedul
 	return out, nil
 }
 
-// Retrieve a single scheduled message by id.
+// Get message.
 //
 // Retrieves a single resource with the given id from the service.
 func (r *ScheduledMessagesResource) Retrieve(ctx context.Context, id string) (*ScheduledMessage, error) {
@@ -56,10 +88,12 @@ func (r *ScheduledMessagesResource) Retrieve(ctx context.Context, id string) (*S
 	return out, nil
 }
 
-// Update a scheduled message.
+// Update message.
 //
-// Updates the resource identified by id using data. Only the fields supplied
-// on params are sent — unset (nil) fields preserve their server-side value.
+// Updates the resource identified by id using the supplied fields. Only the
+// fields supplied on params are sent — unset (nil) fields preserve their
+// server-side value. Rejected once the message has advanced past the
+// editable window (status not in pending/sending).
 func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, params UpdateScheduledMessageParams) (*ScheduledMessage, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPatch,
@@ -70,25 +104,6 @@ func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, param
 		return nil, err
 	}
 	out := &ScheduledMessage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Delete (cancel) a scheduled message.
-//
-// Cancels a queued scheduled message before it fires. Returns the deleted
-// ref ({id, deleted: true}).
-func (r *ScheduledMessagesResource) Delete(ctx context.Context, id string) (*DeletedResource, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodDelete,
-		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &DeletedResource{}
 	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}

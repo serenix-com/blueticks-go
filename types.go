@@ -20,16 +20,9 @@ package blueticks
 //
 // Go has no generics-aware envelope shared across resources without forcing
 // callers into reflection — instead each resource defines its own typed
-// page (e.g., MessagesPage). This keeps decoding direct and IDE-friendly.
+// page (e.g., ScheduledMessagesPage). This keeps decoding direct and IDE-friendly.
 
 // --- Pagination wrappers (one per resource) ----------------------------------
-
-// MessagesPage is the paginated response from MessagesResource.List.
-type MessagesPage struct {
-	Data       []Message `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor,omitempty"`
-}
 
 // AudiencesPage is the paginated response from AudiencesResource.List.
 type AudiencesPage struct {
@@ -80,14 +73,6 @@ type ContactsPage struct {
 	NextCursor *string   `json:"next_cursor,omitempty"`
 }
 
-// ScheduledMessagesPage is the paginated response from
-// ScheduledMessagesResource.List.
-type ScheduledMessagesPage struct {
-	Data       []ScheduledMessage `json:"data"`
-	HasMore    bool               `json:"has_more"`
-	NextCursor *string            `json:"next_cursor,omitempty"`
-}
-
 // GroupsPage is the paginated response from GroupsResource.List.
 type GroupsPage struct {
 	Data       []Group `json:"data"`
@@ -122,168 +107,6 @@ type Account struct {
 	Name      string  `json:"name"`
 	Timezone  *string `json:"timezone,omitempty"`
 	CreatedAt string  `json:"created_at"`
-}
-
-// --- Messages ----------------------------------------------------------------
-
-// Documented values for Message.Status. The wire type is `string` (the OpenAPI
-// schema enumerates these values but Go has no dedicated enum type) — compare
-// the field directly against these constants.
-const (
-	MessageStatusScheduled = "scheduled"
-	MessageStatusQueued    = "queued"
-	MessageStatusSending   = "sending"
-	MessageStatusSent      = "sent"
-	MessageStatusDelivered = "delivered"
-	MessageStatusRead      = "read"
-	MessageStatusFailed    = "failed"
-)
-
-// Documented values for Message.Type. The wire type is `string`.
-const (
-	MessageTypeText  = "text"
-	MessageTypeMedia = "media"
-	MessageTypePoll  = "poll"
-)
-
-// MessageLinkPreview is the optional rich-preview card embedded in a Message.
-//
-// All fields are nullable on the wire — nil means the server returned null.
-type MessageLinkPreview struct {
-	Title        *string `json:"title"`
-	Description  *string `json:"description"`
-	CanonicalURL *string `json:"canonical_url"`
-	Thumbnail    *string `json:"thumbnail"`
-}
-
-// Message is a message sent via the Blueticks API.
-//
-// Type: text | media | poll. Compare against the MessageType* constants above.
-// Status: scheduled | queued | sending | delivered | read | failed. Compare
-// against the MessageStatus* constants above.
-//
-// Nullable fields use pointer types — nil means the server returned null
-// (not absent).
-type Message struct {
-	ID            string              `json:"id"`
-	Key           *string             `json:"key"`
-	To            string              `json:"to"`
-	From          *string             `json:"from"`
-	Type          string              `json:"type"`
-	Text          *string             `json:"text"`
-	MediaURL      *string             `json:"media_url"`
-	MediaKind     *string             `json:"media_kind"`
-	PollQuestion  *string             `json:"poll_question"`
-	Status        string              `json:"status"`
-	SendAt        *string             `json:"send_at"`
-	CreatedAt     string              `json:"created_at"`
-	SentAt        *string             `json:"sent_at"`
-	DeliveredAt   *string             `json:"delivered_at"`
-	ReadAt        *string             `json:"read_at"`
-	FailedAt      *string             `json:"failed_at"`
-	FailureReason *string             `json:"failure_reason"`
-	LinkPreview   *MessageLinkPreview `json:"link_preview"`
-}
-
-// SendMessageTextParams is the request body for sending a text message.
-//
-// Set Type to "text" (MessageTypeText). Text is required (1–4096 chars).
-// LinkPreview controls the rich-preview card: true (default) = auto-fetch,
-// false = never attach, or a SendLinkPreviewParams object for a custom card.
-type SendMessageTextParams struct {
-	Type        string      `json:"type"`
-	To          string      `json:"to"`
-	Text        string      `json:"text"`
-	LinkPreview interface{} `json:"link_preview,omitempty"`
-	SendAt      string      `json:"send_at,omitempty"`
-	From        string      `json:"from,omitempty"`
-	ReplyTo     string      `json:"reply_to,omitempty"`
-	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
-	IdempotencyKey string `json:"-"`
-}
-
-// SendMessageMediaParams is the request body for sending a media message.
-//
-// Set Type to "media" (MessageTypeMedia). Media.URL is required.
-type SendMessageMediaParams struct {
-	Type    string          `json:"type"`
-	To      string          `json:"to"`
-	Media   SendMediaObject `json:"media"`
-	SendAt  string          `json:"send_at,omitempty"`
-	From    string          `json:"from,omitempty"`
-	ReplyTo string          `json:"reply_to,omitempty"`
-	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
-	IdempotencyKey string `json:"-"`
-}
-
-// SendMediaObject is the nested media descriptor in SendMessageMediaParams.
-type SendMediaObject struct {
-	URL      string `json:"url"`
-	Kind     string `json:"kind,omitempty"`
-	Caption  string `json:"caption,omitempty"`
-	Filename string `json:"filename,omitempty"`
-}
-
-// SendMessagePollParams is the request body for sending a poll message.
-//
-// Set Type to "poll" (MessageTypePoll). Poll.Question and Poll.Options are required.
-type SendMessagePollParams struct {
-	Type    string         `json:"type"`
-	To      string         `json:"to"`
-	Poll    SendPollObject `json:"poll"`
-	SendAt  string         `json:"send_at,omitempty"`
-	From    string         `json:"from,omitempty"`
-	ReplyTo string         `json:"reply_to,omitempty"`
-	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
-	IdempotencyKey string `json:"-"`
-}
-
-// SendPollObject is the nested poll descriptor in SendMessagePollParams.
-type SendPollObject struct {
-	Question      string   `json:"question"`
-	Options       []string `json:"options"`
-	AllowMultiple bool     `json:"allow_multiple,omitempty"`
-}
-
-// SendMessageParams is the request body for MessagesResource.Send.
-//
-// The /v1/messages POST body is a discriminated union on the `type` field.
-// Construct using one of the convenience helpers:
-//
-//	params := blueticks.NewTextMessage("+15551234567", "hello")
-//	params := blueticks.NewMediaMessage("+15551234567", blueticks.SendMediaObject{URL: "https://..."})
-//	params := blueticks.NewPollMessage("+15551234567", blueticks.SendPollObject{Question: "Q?", Options: []string{"A","B"}})
-//
-// Or build the struct directly — the server validates the type/variant pair.
-type SendMessageParams struct {
-	// Type is the discriminator: "text", "media", or "poll".
-	Type string `json:"type"`
-	To   string `json:"to"`
-	// Text is required when Type == "text".
-	Text string `json:"text,omitempty"`
-	// LinkPreview is optional when Type == "text".
-	// true (default) = auto-fetch; false = never attach; object = custom card.
-	LinkPreview interface{} `json:"link_preview,omitempty"`
-	// Media is required when Type == "media".
-	Media *SendMediaObject `json:"media,omitempty"`
-	// Poll is required when Type == "poll".
-	Poll    *SendPollObject `json:"poll,omitempty"`
-	SendAt  string          `json:"send_at,omitempty"`
-	From    string          `json:"from,omitempty"`
-	ReplyTo string          `json:"reply_to,omitempty"`
-	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
-	IdempotencyKey string `json:"-"`
-}
-
-// UpdateMessageParams is the request body for MessagesResource.Update
-// (PATCH /v1/messages/{id}). All fields are optional but at least one
-// must be provided. Replaces the matching field on the queued message;
-// rejected once the message has advanced past the editable window.
-type UpdateMessageParams struct {
-	Text         *string `json:"text,omitempty"`
-	MediaURL     *string `json:"media_url,omitempty"`
-	MediaCaption *string `json:"media_caption,omitempty"`
-	SendAt       *string `json:"send_at,omitempty"`
 }
 
 // --- Newsletters -------------------------------------------------------------
@@ -636,28 +459,124 @@ type UpdateGroupParams struct {
 	Settings map[string]bool `json:"settings,omitempty"`
 }
 
-// --- Scheduled messages ------------------------------------------------------
+// --- Scheduled Messages ------------------------------------------------------
 
-// ScheduledMessage is a one-time or recurring scheduled message returned by
-// /v1/scheduled-messages.
+// Documented values for ScheduledMessage.Status. The wire type is `string`
+// (the OpenAPI schema enumerates these values but Go has no dedicated enum
+// type) — compare the field directly against these constants.
+const (
+	MessageStatusScheduled = "scheduled"
+	MessageStatusQueued    = "queued"
+	MessageStatusSending   = "sending"
+	MessageStatusDelivered = "delivered"
+	MessageStatusRead      = "read"
+	MessageStatusFailed    = "failed"
+)
+
+// Documented values for ScheduledMessage.Type. The wire type is `string`.
+const (
+	MessageTypeText  = "text"
+	MessageTypeMedia = "media"
+	MessageTypePoll  = "poll"
+)
+
+// ScheduledMessagesPage is the paginated response from
+// ScheduledMessagesResource.List.
+type ScheduledMessagesPage struct {
+	Data       []ScheduledMessage `json:"data"`
+	HasMore    bool               `json:"has_more"`
+	NextCursor *string            `json:"next_cursor,omitempty"`
+}
+
+// MessageLinkPreview is the optional rich-preview card embedded in a
+// ScheduledMessage.
 //
-// All non-id fields are nullable per the OpenAPI schema — pointers preserve
-// the wire-level null vs. empty distinction. Status mirrors Message.Status
-// (compare against the MessageStatus* constants).
+// All fields are nullable on the wire — nil means the server returned null.
+type MessageLinkPreview struct {
+	Title        *string `json:"title"`
+	Description  *string `json:"description"`
+	CanonicalURL *string `json:"canonical_url"`
+	Thumbnail    *string `json:"thumbnail"`
+}
+
+// ScheduledMessage is a message created via POST /v1/scheduled-messages and
+// returned by all /v1/scheduled-messages* endpoints.
+//
+// Type: text | media | poll. Compare against the MessageType* constants.
+// Status: scheduled | queued | sending | delivered | read | failed. Compare
+// against the MessageStatus* constants.
+//
+// Nullable fields use pointer types — nil means the server returned null
+// (not absent).
 type ScheduledMessage struct {
-	ID             string  `json:"id"`
-	To             *string `json:"to"`
-	Text           *string `json:"text"`
-	MediaURL       *string `json:"media_url"`
-	MediaCaption   *string `json:"media_caption"`
-	MediaFilename  *string `json:"media_filename"`
-	MediaMimeType  *string `json:"media_mime_type"`
-	SendAt         *string `json:"send_at"`
-	Status         *string `json:"status"`
-	IsRecurring    bool    `json:"is_recurring"`
-	RecurrenceRule *string `json:"recurrence_rule"`
-	CreatedAt      *string `json:"created_at"`
-	UpdatedAt      *string `json:"updated_at"`
+	ID            string              `json:"id"`
+	Key           *string             `json:"key"`
+	To            string              `json:"to"`
+	From          *string             `json:"from"`
+	Type          string              `json:"type"`
+	Text          *string             `json:"text"`
+	MediaURL      *string             `json:"media_url"`
+	MediaKind     *string             `json:"media_kind"`
+	PollQuestion  *string             `json:"poll_question"`
+	Status        string              `json:"status"`
+	SendAt        *string             `json:"send_at"`
+	CreatedAt     string              `json:"created_at"`
+	SentAt        *string             `json:"sent_at"`
+	DeliveredAt   *string             `json:"delivered_at"`
+	ReadAt        *string             `json:"read_at"`
+	FailedAt      *string             `json:"failed_at"`
+	FailureReason *string             `json:"failure_reason"`
+	LinkPreview   *MessageLinkPreview `json:"link_preview"`
+}
+
+// SendMediaObject is the nested media descriptor inside
+// CreateScheduledMessageParams when Type == "media".
+type SendMediaObject struct {
+	URL      string `json:"url,omitempty"`
+	Kind     string `json:"kind,omitempty"`
+	Caption  string `json:"caption,omitempty"`
+	Filename string `json:"filename,omitempty"`
+}
+
+// SendPollObject is the nested poll descriptor inside
+// CreateScheduledMessageParams when Type == "poll".
+type SendPollObject struct {
+	Question      string   `json:"question"`
+	Options       []string `json:"options"`
+	AllowMultiple bool     `json:"allow_multiple,omitempty"`
+}
+
+// CreateScheduledMessageParams is the request body for
+// ScheduledMessagesResource.Create.
+//
+// The POST body is a discriminated union on the `type` field:
+//
+//	params := blueticks.CreateScheduledMessageParams{
+//	    Type: blueticks.MessageTypeText,
+//	    To:   "+15551234567",
+//	    Text: "hello",
+//	}
+//
+// The server validates the type/variant pair (Text for "text", Media for
+// "media", Poll for "poll").
+type CreateScheduledMessageParams struct {
+	// Type is the discriminator: "text", "media", or "poll".
+	Type string `json:"type"`
+	To   string `json:"to"`
+	// Text is required when Type == "text".
+	Text string `json:"text,omitempty"`
+	// LinkPreview is optional when Type == "text".
+	// true (default) = auto-fetch; false = never attach; object = custom card.
+	LinkPreview interface{} `json:"link_preview,omitempty"`
+	// Media is required when Type == "media".
+	Media *SendMediaObject `json:"media,omitempty"`
+	// Poll is required when Type == "poll".
+	Poll    *SendPollObject `json:"poll,omitempty"`
+	SendAt  string          `json:"send_at,omitempty"`
+	From    string          `json:"from,omitempty"`
+	ReplyTo string          `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
+	IdempotencyKey string `json:"-"`
 }
 
 // ListScheduledMessagesParams is the query-param bundle for
@@ -665,12 +584,16 @@ type ScheduledMessage struct {
 type ListScheduledMessagesParams struct {
 	Limit  int
 	Cursor string
+	ChatID string
+	Status string
+	Q      string
 }
 
-// UpdateScheduledMessageParams is the body for ScheduledMessagesResource.Update.
-//
-// All fields are optional; omit (leave nil / zero) any you don't want to
-// change.
+// UpdateScheduledMessageParams is the request body for
+// ScheduledMessagesResource.Update (PATCH /v1/scheduled-messages/{id}). All
+// fields are optional but at least one must be provided. Replaces the
+// matching field on the queued message; rejected once the message has
+// advanced past the editable window.
 type UpdateScheduledMessageParams struct {
 	Text         *string `json:"text,omitempty"`
 	MediaURL     *string `json:"media_url,omitempty"`

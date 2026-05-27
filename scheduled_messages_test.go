@@ -2,9 +2,96 @@ package blueticks
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 )
+
+// smFixture is the canonical ScheduledMessage fixture matching the spec's
+// 200/201 response.
+const smFixture = `{"id":"sm_1","key":null,"to":"+15555550100","from":null,"type":"text","text":"hi","media_url":null,"media_kind":null,"poll_question":null,"status":"queued","send_at":null,"created_at":"2026-01-01T00:00:00Z","sent_at":null,"delivered_at":null,"read_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+
+func TestScheduledMessagesCreateText(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		if got := r.Header.Get("Idempotency-Key"); got != "key_1" {
+			t.Errorf("missing idempotency-key: %q", got)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(body, &sent)
+		if sent["type"] != "text" || sent["to"] != "+15555550100" || sent["text"] != "hi" {
+			t.Errorf("unexpected body: %v", sent)
+		}
+		jsonResponse(w, smFixture)
+	})
+	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
+		Type: MessageTypeText, To: "+15555550100", Text: "hi", IdempotencyKey: "key_1",
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if got.ID != "sm_1" || got.Status != "queued" || got.Type != MessageTypeText {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
+func TestScheduledMessagesCreateMedia(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(body, &sent)
+		if sent["type"] != "media" {
+			t.Errorf("expected type=media, got %v", sent["type"])
+		}
+		mediaFix := `{"id":"sm_2","key":null,"to":"+15555550100","from":null,"type":"media","text":null,"media_url":"https://cdn.example.com/x.pdf","media_kind":"document","poll_question":null,"status":"queued","send_at":null,"created_at":"2026-01-01T00:00:00Z","sent_at":null,"delivered_at":null,"read_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+		jsonResponse(w, mediaFix)
+	})
+	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
+		Type:  MessageTypeMedia,
+		To:    "+15555550100",
+		Media: &SendMediaObject{URL: "https://cdn.example.com/x.pdf", Kind: "document", Filename: "receipt.pdf"},
+	})
+	if err != nil {
+		t.Fatalf("Create media: %v", err)
+	}
+	if got.ID != "sm_2" || got.Type != MessageTypeMedia {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
+func TestScheduledMessagesCreatePoll(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		body, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(body, &sent)
+		if sent["type"] != "poll" {
+			t.Errorf("expected type=poll, got %v", sent["type"])
+		}
+		pollFix := `{"id":"sm_3","key":null,"to":"+15555550100","from":null,"type":"poll","text":null,"media_url":null,"media_kind":null,"poll_question":"Pizza?","status":"queued","send_at":null,"created_at":"2026-01-01T00:00:00Z","sent_at":null,"delivered_at":null,"read_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+		jsonResponse(w, pollFix)
+	})
+	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
+		Type: MessageTypePoll,
+		To:   "+15555550100",
+		Poll: &SendPollObject{Question: "Pizza?", Options: []string{"Yes", "No"}},
+	})
+	if err != nil {
+		t.Fatalf("Create poll: %v", err)
+	}
+	if got.ID != "sm_3" || got.Type != MessageTypePoll {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
 
 func TestScheduledMessagesList(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -14,9 +101,12 @@ func TestScheduledMessagesList(t *testing.T) {
 		if got := r.URL.Query().Get("limit"); got != "5" {
 			t.Errorf("limit query: %q", got)
 		}
-		jsonResponse(w, `{"data":[{"id":"sm_1","to":"+1","text":"hi","media_url":null,"media_caption":null,"media_filename":null,"media_mime_type":null,"send_at":"2026-01-02T00:00:00Z","status":"scheduled","is_recurring":false,"recurrence_rule":null,"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}],"has_more":false,"next_cursor":null}`)
+		if got := r.URL.Query().Get("status"); got != "queued" {
+			t.Errorf("status query: %q", got)
+		}
+		jsonResponse(w, `{"data":[`+smFixture+`],"has_more":false}`)
 	})
-	got, err := c.ScheduledMessages.List(context.Background(), ListScheduledMessagesParams{Limit: 5})
+	got, err := c.ScheduledMessages.List(context.Background(), ListScheduledMessagesParams{Limit: 5, Status: "queued"})
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -33,7 +123,7 @@ func TestScheduledMessagesRetrieve(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/scheduled-messages/sm_1" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"id":"sm_1","to":"+1","text":"hi","media_url":null,"media_caption":null,"media_filename":null,"media_mime_type":null,"send_at":"2026-01-02T00:00:00Z","status":"scheduled","is_recurring":false,"recurrence_rule":null,"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}`)
+		jsonResponse(w, smFixture)
 	})
 	got, err := c.ScheduledMessages.Retrieve(context.Background(), "sm_1")
 	if err != nil {
@@ -52,49 +142,33 @@ func TestScheduledMessagesUpdate(t *testing.T) {
 		if r.Method != http.MethodPatch || r.URL.Path != "/v1/scheduled-messages/sm_1" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"id":"sm_1","to":"+1","text":"updated","media_url":null,"media_caption":null,"media_filename":null,"media_mime_type":null,"send_at":"2026-02-02T00:00:00Z","status":"scheduled","is_recurring":false,"recurrence_rule":null,"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-02T00:00:00Z"}`)
+		jsonResponse(w, smFixture)
 	})
-	newText := "updated"
+	newText := "edited"
 	got, err := c.ScheduledMessages.Update(context.Background(), "sm_1", UpdateScheduledMessageParams{Text: &newText})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
 	}
-	if got.Text == nil || *got.Text != "updated" {
-		t.Fatalf("unexpected text: %+v", got.Text)
-	}
-}
-
-func TestScheduledMessagesDelete(t *testing.T) {
-	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodDelete || r.URL.Path != "/v1/scheduled-messages/sm_1" {
-			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
-		}
-		jsonResponse(w, `{"id":"sm_1","deleted":true}`)
-	})
-	got, err := c.ScheduledMessages.Delete(context.Background(), "sm_1")
-	if err != nil {
-		t.Fatalf("Delete: %v", err)
-	}
-	if got.ID != "sm_1" || !got.Deleted {
-		t.Fatalf("unexpected delete ref: %+v", got)
+	if got.ID != "sm_1" {
+		t.Fatalf("unexpected id: %q", got.ID)
 	}
 }
 
 func TestScheduledMessagesDecodeEmpty(t *testing.T) {
-	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, `{}`)
-	})
-	got, err := c.ScheduledMessages.Retrieve(context.Background(), "sm_1")
-	if err != nil {
-		t.Fatalf("Retrieve: %v", err)
-	}
-	if got.ID != "" {
-		t.Fatalf("expected zero ID, got %q", got.ID)
+	if err := decodeJSON([]byte(`{}`), &ScheduledMessage{}); err != nil {
+		t.Fatalf("ScheduledMessage empty decode: %v", err)
 	}
 }
 
-func TestScheduledMessagesUnauthorized(t *testing.T) {
+func TestScheduledMessagesCreateUnauthorized(t *testing.T) {
 	c, _ := newTestServer(t, unauthorizedHandler)
-	_, err := c.ScheduledMessages.List(context.Background(), ListScheduledMessagesParams{})
+	_, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{Type: MessageTypeText, To: "+1", Text: "hi"})
+	expectAuthError(t, err)
+}
+
+func TestScheduledMessagesUpdateUnauthorized(t *testing.T) {
+	c, _ := newTestServer(t, unauthorizedHandler)
+	newText := "edited"
+	_, err := c.ScheduledMessages.Update(context.Background(), "sm_1", UpdateScheduledMessageParams{Text: &newText})
 	expectAuthError(t, err)
 }

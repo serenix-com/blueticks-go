@@ -23,7 +23,8 @@ func main() {
 		log.Fatalf("init: %v", err)
 	}
 
-	msg, err := c.Messages.Send(context.Background(), blueticks.SendMessageParams{
+	msg, err := c.ScheduledMessages.Create(context.Background(), blueticks.CreateScheduledMessageParams{
+		Type:           blueticks.MessageTypeText,
 		To:             to,
 		Text:           "Hello from the Blueticks Go SDK!",
 		IdempotencyKey: "example-send-1",
