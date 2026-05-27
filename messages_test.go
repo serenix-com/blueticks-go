@@ -138,3 +138,27 @@ func TestMessagesUnauthorized(t *testing.T) {
 	_, err := c.Messages.Send(context.Background(), SendMessageParams{Type: MessageTypeText, To: "+1", Text: "hi"})
 	expectAuthError(t, err)
 }
+
+func TestMessagesUpdate(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch || r.URL.Path != "/v1/messages/msg_1" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, msgFixture)
+	})
+	newText := "edited"
+	got, err := c.Messages.Update(context.Background(), "msg_1", UpdateMessageParams{Text: &newText})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if got.ID != "msg_1" {
+		t.Fatalf("unexpected id: %q", got.ID)
+	}
+}
+
+func TestMessagesUpdateUnauthorized(t *testing.T) {
+	c, _ := newTestServer(t, unauthorizedHandler)
+	newText := "edited"
+	_, err := c.Messages.Update(context.Background(), "msg_1", UpdateMessageParams{Text: &newText})
+	expectAuthError(t, err)
+}

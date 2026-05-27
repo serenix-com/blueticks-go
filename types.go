@@ -275,6 +275,17 @@ type SendMessageParams struct {
 	IdempotencyKey string `json:"-"`
 }
 
+// UpdateMessageParams is the request body for MessagesResource.Update
+// (PATCH /v1/messages/{id}). All fields are optional but at least one
+// must be provided. Replaces the matching field on the queued message;
+// rejected once the message has advanced past the editable window.
+type UpdateMessageParams struct {
+	Text         *string `json:"text,omitempty"`
+	MediaURL     *string `json:"media_url,omitempty"`
+	MediaCaption *string `json:"media_caption,omitempty"`
+	SendAt       *string `json:"send_at,omitempty"`
+}
+
 // --- Newsletters -------------------------------------------------------------
 
 // Documented values for Newsletter.Verification. The wire type is `string`.
@@ -451,8 +462,10 @@ type Chat struct {
 	ID            string  `json:"id"`
 	Name          *string `json:"name,omitempty"`
 	IsGroup       bool    `json:"is_group"`
+	IsNewsletter  bool    `json:"is_newsletter"`
 	LastMessageAt *string `json:"last_message_at,omitempty"`
 	UnreadCount   *int    `json:"unread_count,omitempty"`
+	MarkedUnread  bool    `json:"marked_unread"`
 }
 
 // Participant is a member of a group chat.

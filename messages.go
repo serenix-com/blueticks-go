@@ -57,6 +57,27 @@ func (r *MessagesResource) Get(ctx context.Context, id string) (*Message, error)
 	return out, nil
 }
 
+// Update edits a previously-queued message that has not dispatched yet.
+//
+// Accepts a subset of Text, MediaURL, MediaCaption, SendAt — at least one
+// must be set. Returns 400 once the message has advanced past the editable
+// window (status not in pending/sending).
+func (r *MessagesResource) Update(ctx context.Context, id string, params UpdateMessageParams) (*Message, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPatch,
+		path:   "/v1/messages/" + url.PathEscape(id),
+		body:   params,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &Message{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // List messages sent through the API, newest first. Cursor-paginated.
 func (r *MessagesResource) List(ctx context.Context, params ListMessagesParams) (*MessagesPage, error) {
 	q := url.Values{}
