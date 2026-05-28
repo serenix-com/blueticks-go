@@ -409,6 +409,38 @@ type BatchMessageAcksResponse struct {
 	Data []BatchMessageAckEntry `json:"data"`
 }
 
+// SendMessageInChatParams is the request body for ChatsResource.SendMessage
+// (POST /v1/chats/{chat_id}/messages).
+//
+// The wire schema is a discriminated union on the `type` field — same shape
+// as CreateScheduledMessageParams minus `to` (derived from the URL path) and
+// `send_at` (this endpoint is fire-and-forget):
+//
+//	params := blueticks.SendMessageInChatParams{
+//	    Type: blueticks.MessageTypeText,
+//	    Text: "hello",
+//	}
+//
+// The server validates the type/variant pair (Text for "text", Media for
+// "media", Poll for "poll").
+type SendMessageInChatParams struct {
+	// Type is the discriminator: "text", "media", or "poll".
+	Type string `json:"type"`
+	// Text is required when Type == "text".
+	Text string `json:"text,omitempty"`
+	// LinkPreview is optional when Type == "text".
+	// true (default) = auto-fetch; false = never attach; object = custom card.
+	LinkPreview interface{} `json:"link_preview,omitempty"`
+	// Media is required when Type == "media".
+	Media *SendMediaObject `json:"media,omitempty"`
+	// Poll is required when Type == "poll".
+	Poll    *SendPollObject `json:"poll,omitempty"`
+	From    string          `json:"from,omitempty"`
+	ReplyTo string          `json:"reply_to,omitempty"`
+	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
+	IdempotencyKey string `json:"-"`
+}
+
 // --- Contacts ----------------------------------------------------------------
 
 // Contact is a WhatsApp contact in the user's address book.

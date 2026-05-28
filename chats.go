@@ -130,6 +130,31 @@ func (r *ChatsResource) Open(ctx context.Context, chatID string) (*ChatRef, erro
 	return out, nil
 }
 
+// SendMessage sends a message immediately to a specific chat.
+//
+// The body is the same discriminated union as POST /v1/scheduled-messages minus
+// `to` (derived from the URL path) and `send_at` (this endpoint is
+// fire-and-forget). Variants: "text", "media", "poll". The dispatch is direct
+// — no DB row is created; the response carries the WhatsApp wire key under
+// `key`. For scheduled or queue-managed sends use ScheduledMessagesResource.Create
+// instead. Pass an IdempotencyKey on the params to make the call safe to retry.
+func (r *ChatsResource) SendMessage(ctx context.Context, chatID string, params SendMessageInChatParams) (*ScheduledMessage, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method:         http.MethodPost,
+		path:           "/v1/chats/" + url.PathEscape(chatID) + "/messages",
+		body:           params,
+		idempotencyKey: params.IdempotencyKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &ScheduledMessage{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ListMessages returns messages from a chat.
 //
 // `MessageTypes` is sent as a single comma-separated query value because the

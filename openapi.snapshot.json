@@ -1773,6 +1773,306 @@
         ],
         "type": "object"
       },
+      "SendInChatRequest": {
+        "discriminator": {
+          "mapping": {
+            "media": "#/components/schemas/SendInChatRequestMedia",
+            "poll": "#/components/schemas/SendInChatRequestPoll",
+            "text": "#/components/schemas/SendInChatRequestText"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SendInChatRequestText"
+          },
+          {
+            "$ref": "#/components/schemas/SendInChatRequestMedia"
+          },
+          {
+            "$ref": "#/components/schemas/SendInChatRequestPoll"
+          }
+        ]
+      },
+      "SendInChatRequestMedia": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "pattern": "^\\+[1-9]\\d{6,14}$",
+            "type": "string"
+          },
+          "media": {
+            "additionalProperties": false,
+            "properties": {
+              "caption": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "data_base64": {
+                "description": "Raw media bytes, base64-encoded. Alternative to `url`.",
+                "maxLength": 15728640,
+                "minLength": 1,
+                "type": "string"
+              },
+              "filename": {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              "kind": {
+                "description": "Media kind. Optional \u2014 falls back to engine auto-detection from URL/Content-Type.",
+                "enum": [
+                  "image",
+                  "video",
+                  "audio",
+                  "document",
+                  "sticker",
+                  "voice",
+                  "gif"
+                ],
+                "type": "string"
+              },
+              "url": {
+                "format": "uri",
+                "maxLength": 2048,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "mentions": {
+            "additionalProperties": false,
+            "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+            "properties": {
+              "displays": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              },
+              "ids": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              }
+            },
+            "required": [
+              "ids"
+            ],
+            "type": "object"
+          },
+          "reply_to": {
+            "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "media"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "media"
+        ],
+        "title": "Media",
+        "type": "object"
+      },
+      "SendInChatRequestPoll": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "pattern": "^\\+[1-9]\\d{6,14}$",
+            "type": "string"
+          },
+          "mentions": {
+            "additionalProperties": false,
+            "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+            "properties": {
+              "displays": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              },
+              "ids": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              }
+            },
+            "required": [
+              "ids"
+            ],
+            "type": "object"
+          },
+          "poll": {
+            "additionalProperties": false,
+            "properties": {
+              "allow_multiple": {
+                "default": false,
+                "type": "boolean"
+              },
+              "options": {
+                "items": {
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 12,
+                "minItems": 2,
+                "type": "array"
+              },
+              "question": {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "question",
+              "options"
+            ],
+            "type": "object"
+          },
+          "reply_to": {
+            "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "poll"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "poll"
+        ],
+        "title": "Poll",
+        "type": "object"
+      },
+      "SendInChatRequestText": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "pattern": "^\\+[1-9]\\d{6,14}$",
+            "type": "string"
+          },
+          "link_preview": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "canonical_url": {
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  "description": {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  "thumbnail": {
+                    "maxLength": 200000,
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Controls the rich-preview card rendered under a URL in the text. true (default) \u2192 auto-fetch when a URL is present. false \u2192 never attach a preview. object \u2192 use the caller-supplied preview verbatim."
+          },
+          "mentions": {
+            "additionalProperties": false,
+            "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+            "properties": {
+              "displays": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              },
+              "ids": {
+                "items": {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 64,
+                "type": "array"
+              }
+            },
+            "required": [
+              "ids"
+            ],
+            "type": "object"
+          },
+          "reply_to": {
+            "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "text"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Bare URL shortcut. Sends the URL as the body and force-enables link preview.",
+            "format": "uri",
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Text",
+        "type": "object"
+      },
       "SendMessageRequest": {
         "discriminator": {
           "mapping": {
@@ -5636,6 +5936,547 @@
           }
         ],
         "summary": "List chat messages",
+        "tags": [
+          "Chats"
+        ]
+      },
+      "post": {
+        "description": "Send a message immediately to a specific chat. The body is the same discriminated union as `POST /v1/scheduled-messages` minus `to` (derived from the URL path) and `send_at` (this endpoint is fire-and-forget). Variants: `text`, `media`, `poll`. The dispatch is direct \u2014 no DB row is created; the response carries the WhatsApp wire key under `key`. For scheduled or queue-managed sends use `POST /v1/scheduled-messages` instead. Requires `messages:write`.",
+        "operationId": "chats.messages.create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "from": {
+                        "pattern": "^\\+[1-9]\\d{6,14}$",
+                        "type": "string"
+                      },
+                      "link_preview": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "canonical_url": {
+                                "format": "uri",
+                                "maxLength": 2048,
+                                "type": "string"
+                              },
+                              "description": {
+                                "maxLength": 2048,
+                                "type": "string"
+                              },
+                              "thumbnail": {
+                                "maxLength": 200000,
+                                "type": "string"
+                              },
+                              "title": {
+                                "maxLength": 255,
+                                "minLength": 1,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "title"
+                            ],
+                            "type": "object"
+                          }
+                        ],
+                        "description": "Controls the rich-preview card rendered under a URL in the text. true (default) \u2192 auto-fetch when a URL is present. false \u2192 never attach a preview. object \u2192 use the caller-supplied preview verbatim."
+                      },
+                      "mentions": {
+                        "additionalProperties": false,
+                        "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+                        "properties": {
+                          "displays": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          },
+                          "ids": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "ids"
+                        ],
+                        "type": "object"
+                      },
+                      "reply_to": {
+                        "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+                        "maxLength": 256,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "text": {
+                        "maxLength": 4096,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": {
+                        "enum": [
+                          "text"
+                        ],
+                        "type": "string"
+                      },
+                      "url": {
+                        "description": "Bare URL shortcut. Sends the URL as the body and force-enables link preview.",
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "title": "Text",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "from": {
+                        "pattern": "^\\+[1-9]\\d{6,14}$",
+                        "type": "string"
+                      },
+                      "media": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "caption": {
+                            "maxLength": 1024,
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "data_base64": {
+                            "description": "Raw media bytes, base64-encoded. Alternative to `url`.",
+                            "maxLength": 15728640,
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "filename": {
+                            "maxLength": 255,
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "kind": {
+                            "description": "Media kind. Optional \u2014 falls back to engine auto-detection from URL/Content-Type.",
+                            "enum": [
+                              "image",
+                              "video",
+                              "audio",
+                              "document",
+                              "sticker",
+                              "voice",
+                              "gif"
+                            ],
+                            "type": "string"
+                          },
+                          "url": {
+                            "format": "uri",
+                            "maxLength": 2048,
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "mentions": {
+                        "additionalProperties": false,
+                        "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+                        "properties": {
+                          "displays": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          },
+                          "ids": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "ids"
+                        ],
+                        "type": "object"
+                      },
+                      "reply_to": {
+                        "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+                        "maxLength": 256,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": {
+                        "enum": [
+                          "media"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "media"
+                    ],
+                    "title": "Media",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "from": {
+                        "pattern": "^\\+[1-9]\\d{6,14}$",
+                        "type": "string"
+                      },
+                      "mentions": {
+                        "additionalProperties": false,
+                        "description": "JIDs to mention. Highlights/notifies the listed users; `displays` is the rendered name list.",
+                        "properties": {
+                          "displays": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          },
+                          "ids": {
+                            "items": {
+                              "maxLength": 128,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "ids"
+                        ],
+                        "type": "object"
+                      },
+                      "poll": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "allow_multiple": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "options": {
+                            "items": {
+                              "maxLength": 100,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "maxItems": 12,
+                            "minItems": 2,
+                            "type": "array"
+                          },
+                          "question": {
+                            "maxLength": 255,
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "question",
+                          "options"
+                        ],
+                        "type": "object"
+                      },
+                      "reply_to": {
+                        "description": "Wire `key` of a prior message to quote-reply (from MessageResponse.key).",
+                        "maxLength": 256,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": {
+                        "enum": [
+                          "poll"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "poll"
+                    ],
+                    "title": "Poll",
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "delivered_at": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "failed_at": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "failure_reason": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "from": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "key": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "link_preview": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "canonical_url": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "description": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "thumbnail": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "title": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "description",
+                        "canonical_url",
+                        "thumbnail"
+                      ],
+                      "type": "object"
+                    },
+                    "media_kind": {
+                      "enum": [
+                        "image",
+                        "video",
+                        "audio",
+                        "document",
+                        "sticker",
+                        "voice",
+                        "gif"
+                      ],
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "media_url": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "poll_question": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "read_at": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "send_at": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "sent_at": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "scheduled",
+                        "queued",
+                        "sending",
+                        "delivered",
+                        "read",
+                        "failed"
+                      ],
+                      "type": "string"
+                    },
+                    "text": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "description": "Message kind that was sent.",
+                      "enum": [
+                        "text",
+                        "media",
+                        "poll"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "key",
+                    "to",
+                    "from",
+                    "type",
+                    "text",
+                    "media_url",
+                    "media_kind",
+                    "poll_question",
+                    "status",
+                    "send_at",
+                    "created_at",
+                    "sent_at",
+                    "delivered_at",
+                    "read_at",
+                    "failed_at",
+                    "failure_reason"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "sent"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Bad request \u2014 invalid params or body."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Missing or invalid API key."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "API key lacks the required scope."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Resource not found."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Validation failed \u2014 see `error.details` for per-field issues."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Rate limit exceeded \u2014 back off and retry."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [
+              "messages:write"
+            ]
+          }
+        ],
+        "summary": "Send message to chat",
         "tags": [
           "Chats"
         ]
