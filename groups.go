@@ -114,7 +114,7 @@ func (r *GroupsResource) Update(ctx context.Context, groupID string, params Upda
 	return out, nil
 }
 
-// AddMember adds a participant to the group by chat_id (JID) or +E.164 phone.
+// AddMember adds a participant to the group by chat_id (JID) or phone number in international format (e.g. +14155551234).
 // Returns the updated group.
 func (r *GroupsResource) AddMember(ctx context.Context, groupID string, params AddMemberParams) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{

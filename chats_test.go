@@ -52,13 +52,13 @@ func TestChatsListMessagesEncodesMessageTypes(t *testing.T) {
 		if r.URL.Query().Get("message_types") != "image,document" {
 			t.Errorf("expected comma-joined message_types, got %q", r.URL.Query().Get("message_types"))
 		}
-		if r.URL.Query().Get("mode") != "history" {
-			t.Errorf("expected mode=history, got %q", r.URL.Query().Get("mode"))
+		if r.URL.Query().Get("order") != "asc" {
+			t.Errorf("expected order=asc, got %q", r.URL.Query().Get("order"))
 		}
 		jsonResponse(w, `{"data":[],"has_more":false}`)
 	})
 	_, err := c.Chats.ListMessages(context.Background(), "c1@c.us", ListChatMessagesParams{
-		Mode: "history", MessageTypes: []string{"image", "document"},
+		Order: "asc", MessageTypes: []string{"image", "document"},
 	})
 	if err != nil {
 		t.Fatalf("ListMessages: %v", err)

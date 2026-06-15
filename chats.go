@@ -161,11 +161,9 @@ func (r *ChatsResource) SendMessage(ctx context.Context, chatID string, params S
 // OpenAPI schema declares `style: form, explode: false` for that param.
 func (r *ChatsResource) ListMessages(ctx context.Context, chatID string, params ListChatMessagesParams) (*ChatMessagesPage, error) {
 	q := url.Values{}
-	mode := params.Mode
-	if mode == "" {
-		mode = "latest"
+	if params.Order != "" {
+		q.Set("order", params.Order)
 	}
-	q.Set("mode", mode)
 	if params.Query != "" {
 		q.Set("query", params.Query)
 	}

@@ -32,5 +32,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("send: %v", err)
 	}
-	fmt.Printf("queued message %s (status=%s)\n", msg.ID, msg.Status)
+	fmt.Printf("pending message %s (status=%s)\n", msg.ID, msg.Status)
 }

@@ -32,7 +32,7 @@ func main() {
 		To: "+15555550100", Text: "Hello!", IdempotencyKey: "msg-1",
 	})
 	if err != nil { log.Fatal(err) }
-	log.Println("queued:", msg.ID)
+	log.Println("sent:", msg.ID)
 }
 ```
 

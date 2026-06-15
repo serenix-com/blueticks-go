@@ -341,7 +341,7 @@ type ChatMedia struct {
 
 // ListChatMessagesParams is the query-param bundle for ChatsResource.ListMessages.
 type ListChatMessagesParams struct {
-	Mode         string // "latest" or "history"; default "latest"
+	Order        string // "asc" (oldest-first) or "desc" (newest-first, default)
 	Query        string
 	Since        string
 	Until        string
@@ -497,11 +497,11 @@ type UpdateGroupParams struct {
 // (the OpenAPI schema enumerates these values but Go has no dedicated enum
 // type) — compare the field directly against these constants.
 const (
-	MessageStatusScheduled = "scheduled"
-	MessageStatusQueued    = "queued"
-	MessageStatusSending   = "sending"
-	MessageStatusDelivered = "delivered"
+	MessageStatusPending   = "pending"
+	MessageStatusConfirmed = "confirmed"
+	MessageStatusReceived  = "received"
 	MessageStatusRead      = "read"
+	MessageStatusPlayed    = "played"
 	MessageStatusFailed    = "failed"
 )
 
@@ -535,7 +535,7 @@ type MessageLinkPreview struct {
 // returned by all /v1/scheduled-messages* endpoints.
 //
 // Type: text | media | poll. Compare against the MessageType* constants.
-// Status: scheduled | queued | sending | delivered | read | failed. Compare
+// Status: pending | confirmed | received | read | played | failed. Compare
 // against the MessageStatus* constants.
 //
 // Nullable fields use pointer types — nil means the server returned null
@@ -553,9 +553,10 @@ type ScheduledMessage struct {
 	Status        string              `json:"status"`
 	SendAt        *string             `json:"send_at"`
 	CreatedAt     string              `json:"created_at"`
-	SentAt        *string             `json:"sent_at"`
-	DeliveredAt   *string             `json:"delivered_at"`
+	ConfirmedAt   *string             `json:"confirmed_at"`
+	ReceivedAt    *string             `json:"received_at"`
 	ReadAt        *string             `json:"read_at"`
+	PlayedAt      *string             `json:"played_at"`
 	FailedAt      *string             `json:"failed_at"`
 	FailureReason *string             `json:"failure_reason"`
 	LinkPreview   *MessageLinkPreview `json:"link_preview"`
@@ -624,7 +625,7 @@ type ListScheduledMessagesParams struct {
 // UpdateScheduledMessageParams is the request body for
 // ScheduledMessagesResource.Update (PATCH /v1/scheduled-messages/{id}). All
 // fields are optional but at least one must be provided. Replaces the
-// matching field on the queued message; rejected once the message has
+// matching field on the pending message; rejected once the message has
 // advanced past the editable window.
 type UpdateScheduledMessageParams struct {
 	Text         *string `json:"text,omitempty"`
