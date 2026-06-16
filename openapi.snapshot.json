@@ -1289,6 +1289,29 @@
         ],
         "type": "object"
       },
+      "MessageContactResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "_id": {
+            "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "MessageId": {
         "pattern": "^[0-9a-fA-F]{24}$",
         "type": "string"
@@ -1305,6 +1328,33 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "contactList": {
+            "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "_id": {
+                  "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                  "nullable": true,
+                  "type": "string"
+                },
+                "id": {
+                  "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                  "nullable": true,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           },
           "createdAt": {
             "format": "date-time",
@@ -1429,6 +1479,7 @@
           "id",
           "key",
           "to",
+          "contactList",
           "type",
           "text",
           "mediaUrl",
@@ -2195,6 +2246,7 @@
             "type": "string"
           },
           "to": {
+            "description": "Recipient. Either an international phone number in E.164 format (e.g. +15551234567) for a 1:1 chat, or a WhatsApp chat id: `<id>@g.us` for a group, `<id>@newsletter` for a channel / newsletter, or `<phone>@c.us` for an individual.",
             "type": "string"
           },
           "type": {
@@ -10178,6 +10230,33 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "contactList": {
+                          "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "_id": {
+                                "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "createdAt": {
                           "format": "date-time",
                           "type": "string"
@@ -10301,6 +10380,7 @@
                         "id",
                         "key",
                         "to",
+                        "contactList",
                         "type",
                         "text",
                         "mediaUrl",
@@ -11467,6 +11547,33 @@
                             "nullable": true,
                             "type": "string"
                           },
+                          "contactList": {
+                            "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "_id": {
+                                  "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                  "nullable": true,
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
                           "createdAt": {
                             "format": "date-time",
                             "type": "string"
@@ -11590,6 +11697,7 @@
                           "id",
                           "key",
                           "to",
+                          "contactList",
                           "type",
                           "text",
                           "mediaUrl",
@@ -11823,6 +11931,33 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "contactList": {
+                          "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "_id": {
+                                "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "createdAt": {
                           "format": "date-time",
                           "type": "string"
@@ -11946,6 +12081,7 @@
                         "id",
                         "key",
                         "to",
+                        "contactList",
                         "type",
                         "text",
                         "mediaUrl",
@@ -11995,6 +12131,33 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "contactList": {
+                          "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "_id": {
+                                "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "createdAt": {
                           "format": "date-time",
                           "type": "string"
@@ -12118,6 +12281,7 @@
                         "id",
                         "key",
                         "to",
+                        "contactList",
                         "type",
                         "text",
                         "mediaUrl",
@@ -12256,6 +12420,33 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "contactList": {
+                          "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "_id": {
+                                "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "createdAt": {
                           "format": "date-time",
                           "type": "string"
@@ -12379,6 +12570,7 @@
                         "id",
                         "key",
                         "to",
+                        "contactList",
                         "type",
                         "text",
                         "mediaUrl",
@@ -12560,6 +12752,33 @@
                           "nullable": true,
                           "type": "string"
                         },
+                        "contactList": {
+                          "description": "Recipients the message was addressed to, with all stored contact-card fields. `to` mirrors the first entry’s mobile.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "_id": {
+                                "description": "Mongo sub-document id; null for direct (non-persisted) sends.",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "description": "Recipient WhatsApp JID, e.g. `972547602737@c.us`.",
+                                "type": "string"
+                              },
+                              "name": {
+                                "description": "Resolved contact name; null when none was stored (e.g. API sends).",
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "createdAt": {
                           "format": "date-time",
                           "type": "string"
@@ -12683,6 +12902,7 @@
                         "id",
                         "key",
                         "to",
+                        "contactList",
                         "type",
                         "text",
                         "mediaUrl",
