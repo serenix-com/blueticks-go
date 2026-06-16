@@ -7,7 +7,7 @@ import (
 )
 
 func TestGroupsList(t *testing.T) {
-	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"created_at":null,"last_message_at":null,"participant_count":2,"announce":null,"restrict":null,"participants":[]}`
+	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/groups" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
@@ -15,7 +15,7 @@ func TestGroupsList(t *testing.T) {
 		if got := r.URL.Query().Get("limit"); got != "10" {
 			t.Errorf("limit query: %q", got)
 		}
-		jsonResponse(w, `{"data":[`+groupBody+`],"has_more":false}`)
+		jsonResponse(w, `{"data":[`+groupBody+`],"hasMore":false}`)
 	})
 	got, err := c.Groups.List(context.Background(), ListGroupsParams{Limit: 10})
 	if err != nil {
@@ -33,7 +33,7 @@ func TestGroupsListUnauthorized(t *testing.T) {
 }
 
 func TestGroupsCRUD(t *testing.T) {
-	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"created_at":null,"last_message_at":null,"participant_count":2,"announce":null,"restrict":null,"participants":[]}`
+	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups":

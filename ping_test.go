@@ -11,7 +11,7 @@ func TestPingRetrieve(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/ping" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"account_id":"acct_1","key_prefix":"sk_live_1","scopes":["messages:write"]}`)
+		jsonResponse(w, `{"accountId":"acct_1","keyPrefix":"sk_live_1","scopes":["messages:write"]}`)
 	})
 	got, err := c.Ping.Retrieve(context.Background())
 	if err != nil {

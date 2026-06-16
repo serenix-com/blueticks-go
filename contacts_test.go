@@ -11,7 +11,7 @@ func TestContactsList(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/contacts" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"data":[{"chat_id":"c1@c.us","name":"Alice","is_business":false}],"has_more":false}`)
+		jsonResponse(w, `{"data":[{"chatId":"c1@c.us","name":"Alice","isBusiness":false}],"hasMore":false}`)
 	})
 	got, err := c.Contacts.List(context.Background(), ListContactsParams{Query: "a"})
 	if err != nil {

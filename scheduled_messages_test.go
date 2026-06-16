@@ -10,7 +10,7 @@ import (
 
 // smFixture is the canonical ScheduledMessage fixture matching the spec's
 // 200/201 response.
-const smFixture = `{"id":"sm_1","key":null,"to":"+15555550100","from":null,"type":"text","text":"hi","media_url":null,"media_kind":null,"poll_question":null,"status":"pending","send_at":null,"created_at":"2026-01-01T00:00:00Z","confirmed_at":null,"received_at":null,"read_at":null,"played_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+const smFixture = `{"id":"sm_1","key":null,"to":"+15555550100","from":null,"type":"text","text":"hi","mediaUrl":null,"mediaKind":null,"pollQuestion":null,"status":"pending","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"linkPreview":null}`
 
 func TestScheduledMessagesCreateText(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +50,7 @@ func TestScheduledMessagesCreateMedia(t *testing.T) {
 		if sent["type"] != "media" {
 			t.Errorf("expected type=media, got %v", sent["type"])
 		}
-		mediaFix := `{"id":"sm_2","key":null,"to":"+15555550100","from":null,"type":"media","text":null,"media_url":"https://cdn.example.com/x.pdf","media_kind":"document","poll_question":null,"status":"pending","send_at":null,"created_at":"2026-01-01T00:00:00Z","confirmed_at":null,"received_at":null,"read_at":null,"played_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+		mediaFix := `{"id":"sm_2","key":null,"to":"+15555550100","from":null,"type":"media","text":null,"mediaUrl":"https://cdn.example.com/x.pdf","mediaKind":"document","pollQuestion":null,"status":"pending","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"linkPreview":null}`
 		jsonResponse(w, mediaFix)
 	})
 	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
@@ -77,7 +77,7 @@ func TestScheduledMessagesCreatePoll(t *testing.T) {
 		if sent["type"] != "poll" {
 			t.Errorf("expected type=poll, got %v", sent["type"])
 		}
-		pollFix := `{"id":"sm_3","key":null,"to":"+15555550100","from":null,"type":"poll","text":null,"media_url":null,"media_kind":null,"poll_question":"Pizza?","status":"pending","send_at":null,"created_at":"2026-01-01T00:00:00Z","confirmed_at":null,"received_at":null,"read_at":null,"played_at":null,"failed_at":null,"failure_reason":null,"link_preview":null}`
+		pollFix := `{"id":"sm_3","key":null,"to":"+15555550100","from":null,"type":"poll","text":null,"mediaUrl":null,"mediaKind":null,"pollQuestion":"Pizza?","status":"pending","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"linkPreview":null}`
 		jsonResponse(w, pollFix)
 	})
 	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
@@ -104,7 +104,7 @@ func TestScheduledMessagesList(t *testing.T) {
 		if got := r.URL.Query().Get("status"); got != "pending" {
 			t.Errorf("status query: %q", got)
 		}
-		jsonResponse(w, `{"data":[`+smFixture+`],"has_more":false}`)
+		jsonResponse(w, `{"data":[`+smFixture+`],"hasMore":false}`)
 	})
 	got, err := c.ScheduledMessages.List(context.Background(), ListScheduledMessagesParams{Limit: 5, Status: "pending"})
 	if err != nil {

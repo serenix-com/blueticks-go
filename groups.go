@@ -14,7 +14,7 @@ type GroupsResource struct {
 
 // AddMemberParams is the body for GroupsResource.AddMember.
 type AddMemberParams struct {
-	ChatID string `json:"chat_id"`
+	ChatID string `json:"chatId"`
 }
 
 // ListGroupsParams is the query-param bundle for GroupsResource.List.
@@ -28,9 +28,9 @@ type ListGroupsParams struct {
 //
 // FileDataURL is required and must be a `data:<mime>;base64,<data>` URL.
 type SetGroupPictureParams struct {
-	FileDataURL  string `json:"file_data_url"`
-	FileName     string `json:"file_name,omitempty"`
-	FileMimeType string `json:"file_mime_type,omitempty"`
+	FileDataURL  string `json:"fileDataUrl"`
+	FileName     string `json:"fileName,omitempty"`
+	FileMimeType string `json:"fileMimeType,omitempty"`
 }
 
 // List the groups the connected WhatsApp engine sees.
@@ -114,7 +114,7 @@ func (r *GroupsResource) Update(ctx context.Context, groupID string, params Upda
 	return out, nil
 }
 
-// AddMember adds a participant to the group by chat_id (JID) or phone number in international format (e.g. +14155551234).
+// AddMember adds a participant to the group by chatId (JID) or phone number in international format (e.g. +14155551234).
 // Returns the updated group.
 func (r *GroupsResource) AddMember(ctx context.Context, groupID string, params AddMemberParams) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{

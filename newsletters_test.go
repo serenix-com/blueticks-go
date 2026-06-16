@@ -20,7 +20,7 @@ func TestNewslettersCreate(t *testing.T) {
 			t.Errorf("unexpected body: %v", sent)
 		}
 		w.WriteHeader(http.StatusCreated)
-		jsonResponse(w, `{"id":"nl_1","name":"My Channel","description":null,"owner":null,"created_at":"2026-01-01T00:00:00Z","subscribers":0,"invite":null,"verification":"UNVERIFIED"}`)
+		jsonResponse(w, `{"id":"nl_1","name":"My Channel","description":null,"owner":null,"createdAt":"2026-01-01T00:00:00Z","subscribers":0,"invite":null,"verification":"UNVERIFIED"}`)
 	})
 	got, err := c.Newsletters.Create(context.Background(), CreateNewsletterParams{Name: "My Channel"})
 	if err != nil {
@@ -45,7 +45,7 @@ func TestNewslettersList(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/newsletters" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"data":[{"id":"nl_1","name":"My Channel","description":null,"owner":null,"created_at":"2026-01-01T00:00:00Z","subscribers":100,"invite":"abc123","verification":"VERIFIED"}],"has_more":false,"next_cursor":null}`)
+		jsonResponse(w, `{"data":[{"id":"nl_1","name":"My Channel","description":null,"owner":null,"createdAt":"2026-01-01T00:00:00Z","subscribers":100,"invite":"abc123","verification":"VERIFIED"}],"hasMore":false,"nextCursor":null}`)
 	})
 	got, err := c.Newsletters.List(context.Background(), ListNewslettersParams{})
 	if err != nil {
@@ -55,7 +55,7 @@ func TestNewslettersList(t *testing.T) {
 		t.Fatalf("unexpected data: %+v", got)
 	}
 	if got.HasMore {
-		t.Fatalf("expected has_more=false")
+		t.Fatalf("expected hasMore=false")
 	}
 }
 
@@ -70,7 +70,7 @@ func TestNewslettersRetrieve(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/newsletters/nl_1" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"id":"nl_1","name":"My Channel","description":"A great channel","owner":"15551234567@s.whatsapp.net","created_at":"2026-01-01T00:00:00Z","subscribers":42,"invite":"abc123","verification":"VERIFIED"}`)
+		jsonResponse(w, `{"id":"nl_1","name":"My Channel","description":"A great channel","owner":"15551234567@s.whatsapp.net","createdAt":"2026-01-01T00:00:00Z","subscribers":42,"invite":"abc123","verification":"VERIFIED"}`)
 	})
 	got, err := c.Newsletters.Retrieve(context.Background(), "nl_1")
 	if err != nil {

@@ -11,7 +11,7 @@ func TestAudiencesCreate(t *testing.T) {
 		if r.Method != http.MethodPost || r.URL.Path != "/v1/audiences" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"id":"aud_1","name":"VIPs","contact_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+		jsonResponse(w, `{"id":"aud_1","name":"VIPs","contactCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 	})
 	got, err := c.Audiences.Create(context.Background(), CreateAudienceParams{Name: "VIPs"})
 	if err != nil {
@@ -26,11 +26,11 @@ func TestAudiencesListGetUpdateDelete(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/audiences":
-			jsonResponse(w, `{"data":[{"id":"aud_1","name":"V","contact_count":0,"created_at":"2026-01-01T00:00:00Z"}],"has_more":false}`)
+			jsonResponse(w, `{"data":[{"id":"aud_1","name":"V","contactCount":0,"createdAt":"2026-01-01T00:00:00Z"}],"hasMore":false}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/audiences/aud_1":
-			jsonResponse(w, `{"id":"aud_1","name":"V","contact_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"aud_1","name":"V","contactCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/audiences/aud_1":
-			jsonResponse(w, `{"id":"aud_1","name":"V2","contact_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"aud_1","name":"V2","contactCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/audiences/aud_1":
 			jsonResponse(w, `{"id":"aud_1","deleted":true}`)
 		default:
@@ -64,9 +64,9 @@ func TestAudiencesAppendAndContactOps(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/audiences/aud_1/contacts":
-			jsonResponse(w, `{"added":2,"contact_count":2}`)
+			jsonResponse(w, `{"added":2,"contactCount":2}`)
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/audiences/aud_1/contacts/c_1":
-			jsonResponse(w, `{"id":"c_1","to":"+1","added_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"c_1","to":"+1","addedAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/audiences/aud_1/contacts/c_1":
 			w.WriteHeader(http.StatusNoContent)
 		default:

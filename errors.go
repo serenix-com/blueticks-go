@@ -129,7 +129,7 @@ func fromEnvelope(statusCode int, body []byte, retryAfter float64) *APIError {
 		Error struct {
 			Code      string `json:"code"`
 			Message   string `json:"message"`
-			RequestID string `json:"request_id"`
+			RequestID string `json:"requestId"`
 		} `json:"error"`
 	}
 	if len(body) > 0 && json.Unmarshal(body, &envelope) == nil && envelope.Error.Code != "" {

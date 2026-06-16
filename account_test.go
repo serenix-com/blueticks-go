@@ -14,7 +14,7 @@ func TestAccountRetrieve(t *testing.T) {
 		if got := r.Header.Get("Authorization"); got != "Bearer test_key" {
 			t.Errorf("missing auth header: %q", got)
 		}
-		jsonResponse(w, `{"id":"acct_1","name":"Acme","timezone":"UTC","created_at":"2026-01-01T00:00:00Z"}`)
+		jsonResponse(w, `{"id":"acct_1","name":"Acme","timezone":"UTC","createdAt":"2026-01-01T00:00:00Z"}`)
 	})
 	got, err := c.Account.Retrieve(context.Background())
 	if err != nil {

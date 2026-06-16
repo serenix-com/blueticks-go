@@ -10,17 +10,17 @@ func TestCampaignsCRUDAndTransitions(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/campaigns":
-			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audience_id":"aud_1","status":"pending","total_count":0,"sent_count":0,"delivered_count":0,"read_count":0,"failed_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audienceId":"aud_1","status":"pending","totalCount":0,"sentCount":0,"deliveredCount":0,"readCount":0,"failedCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/campaigns":
-			jsonResponse(w, `{"data":[],"has_more":false}`)
+			jsonResponse(w, `{"data":[],"hasMore":false}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/campaigns/cmp_1":
-			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audience_id":"aud_1","status":"running","total_count":1,"sent_count":1,"delivered_count":0,"read_count":0,"failed_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audienceId":"aud_1","status":"running","totalCount":1,"sentCount":1,"deliveredCount":0,"readCount":0,"failedCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/campaigns/cmp_1/pause":
-			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audience_id":"aud_1","status":"paused","total_count":1,"sent_count":1,"delivered_count":0,"read_count":0,"failed_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audienceId":"aud_1","status":"paused","totalCount":1,"sentCount":1,"deliveredCount":0,"readCount":0,"failedCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/campaigns/cmp_1/resume":
-			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audience_id":"aud_1","status":"running","total_count":1,"sent_count":1,"delivered_count":0,"read_count":0,"failed_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audienceId":"aud_1","status":"running","totalCount":1,"sentCount":1,"deliveredCount":0,"readCount":0,"failedCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/campaigns/cmp_1/cancel":
-			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audience_id":"aud_1","status":"aborted","total_count":1,"sent_count":1,"delivered_count":0,"read_count":0,"failed_count":0,"created_at":"2026-01-01T00:00:00Z"}`)
+			jsonResponse(w, `{"id":"cmp_1","name":"Q1","audienceId":"aud_1","status":"aborted","totalCount":1,"sentCount":1,"deliveredCount":0,"readCount":0,"failedCount":0,"createdAt":"2026-01-01T00:00:00Z"}`)
 		default:
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}

@@ -27,72 +27,72 @@ package blueticks
 // AudiencesPage is the paginated response from AudiencesResource.List.
 type AudiencesPage struct {
 	Data       []Audience `json:"data"`
-	HasMore    bool       `json:"has_more"`
-	NextCursor *string    `json:"next_cursor,omitempty"`
+	HasMore    bool       `json:"hasMore"`
+	NextCursor *string    `json:"nextCursor,omitempty"`
 }
 
 // CampaignsPage is the paginated response from CampaignsResource.List.
 type CampaignsPage struct {
 	Data       []Campaign `json:"data"`
-	HasMore    bool       `json:"has_more"`
-	NextCursor *string    `json:"next_cursor,omitempty"`
+	HasMore    bool       `json:"hasMore"`
+	NextCursor *string    `json:"nextCursor,omitempty"`
 }
 
 // WebhooksPage is the paginated response from WebhooksResource.List.
 type WebhooksPage struct {
 	Data       []Webhook `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor,omitempty"`
+	HasMore    bool      `json:"hasMore"`
+	NextCursor *string   `json:"nextCursor,omitempty"`
 }
 
 // ChatsPage is the paginated response from ChatsResource.List.
 type ChatsPage struct {
 	Data       []Chat  `json:"data"`
-	HasMore    bool    `json:"has_more"`
-	NextCursor *string `json:"next_cursor,omitempty"`
+	HasMore    bool    `json:"hasMore"`
+	NextCursor *string `json:"nextCursor,omitempty"`
 }
 
 // ChatMessagesPage is the paginated response from ChatsResource.ListMessages.
 type ChatMessagesPage struct {
 	Data       []ChatMessage `json:"data"`
-	HasMore    bool          `json:"has_more"`
-	NextCursor *string       `json:"next_cursor,omitempty"`
+	HasMore    bool          `json:"hasMore"`
+	NextCursor *string       `json:"nextCursor,omitempty"`
 }
 
 // ParticipantsPage is the paginated response from ChatsResource.ListParticipants.
 type ParticipantsPage struct {
 	Data       []Participant `json:"data"`
-	HasMore    bool          `json:"has_more"`
-	NextCursor *string       `json:"next_cursor,omitempty"`
+	HasMore    bool          `json:"hasMore"`
+	NextCursor *string       `json:"nextCursor,omitempty"`
 }
 
 // ContactsPage is the paginated response from ContactsResource.List.
 type ContactsPage struct {
 	Data       []Contact `json:"data"`
-	HasMore    bool      `json:"has_more"`
-	NextCursor *string   `json:"next_cursor,omitempty"`
+	HasMore    bool      `json:"hasMore"`
+	NextCursor *string   `json:"nextCursor,omitempty"`
 }
 
 // GroupsPage is the paginated response from GroupsResource.List.
 type GroupsPage struct {
 	Data       []Group `json:"data"`
-	HasMore    bool    `json:"has_more"`
-	NextCursor *string `json:"next_cursor,omitempty"`
+	HasMore    bool    `json:"hasMore"`
+	NextCursor *string `json:"nextCursor,omitempty"`
 }
 
 // NewslettersPage is the paginated response from NewslettersResource.List.
 type NewslettersPage struct {
 	Data       []Newsletter `json:"data"`
-	HasMore    bool         `json:"has_more"`
-	NextCursor *string      `json:"next_cursor,omitempty"`
+	HasMore    bool         `json:"hasMore"`
+	NextCursor *string      `json:"nextCursor,omitempty"`
 }
 
 // --- Ping --------------------------------------------------------------------
 
 // Ping is the response from GET /v1/ping.
 type Ping struct {
-	AccountID string   `json:"account_id"`
-	KeyPrefix string   `json:"key_prefix"`
+	AccountID string   `json:"accountId"`
+	KeyPrefix string   `json:"keyPrefix"`
 	Scopes    []string `json:"scopes"`
 }
 
@@ -106,7 +106,7 @@ type Account struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
 	Timezone  *string `json:"timezone,omitempty"`
-	CreatedAt string  `json:"created_at"`
+	CreatedAt string  `json:"createdAt"`
 }
 
 // --- Newsletters -------------------------------------------------------------
@@ -127,7 +127,7 @@ type Newsletter struct {
 	Name         string  `json:"name"`
 	Description  *string `json:"description"`
 	Owner        *string `json:"owner"`
-	CreatedAt    *string `json:"created_at"`
+	CreatedAt    *string `json:"createdAt"`
 	Subscribers  *int    `json:"subscribers"`
 	Invite       *string `json:"invite"`
 	Verification *string `json:"verification"`
@@ -153,11 +153,11 @@ type ListNewslettersParams struct {
 type Audience struct {
 	ID           string            `json:"id"`
 	Name         string            `json:"name"`
-	ContactCount int               `json:"contact_count"`
-	CreatedAt    string            `json:"created_at"`
+	ContactCount int               `json:"contactCount"`
+	CreatedAt    string            `json:"createdAt"`
 	Contacts     []AudienceContact `json:"contacts,omitempty"`
 	Page         int               `json:"page,omitempty"`
-	HasMore      bool              `json:"has_more,omitempty"`
+	HasMore      bool              `json:"hasMore,omitempty"`
 }
 
 // AudienceContact is a single contact within an audience.
@@ -165,13 +165,13 @@ type AudienceContact struct {
 	ID        string            `json:"id"`
 	To        string            `json:"to"`
 	Variables map[string]string `json:"variables,omitempty"`
-	AddedAt   string            `json:"added_at"`
+	AddedAt   string            `json:"addedAt"`
 }
 
 // AppendContactsResult is the response from AudiencesResource.AppendContacts.
 type AppendContactsResult struct {
 	Added        int `json:"added"`
-	ContactCount int `json:"contact_count"`
+	ContactCount int `json:"contactCount"`
 }
 
 // CreateAudienceParams is the body for AudiencesResource.Create.
@@ -206,29 +206,29 @@ type UpdateAudienceContactParams struct {
 type Campaign struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
-	AudienceID     string `json:"audience_id"`
+	AudienceID     string `json:"audienceId"`
 	Status         string `json:"status"`
-	TotalCount     int    `json:"total_count"`
-	SentCount      int    `json:"sent_count"`
-	DeliveredCount int    `json:"delivered_count"`
-	ReadCount      int    `json:"read_count"`
-	FailedCount    int    `json:"failed_count"`
+	TotalCount     int    `json:"totalCount"`
+	SentCount      int    `json:"sentCount"`
+	DeliveredCount int    `json:"deliveredCount"`
+	ReadCount      int    `json:"readCount"`
+	FailedCount    int    `json:"failedCount"`
 	From           string `json:"from,omitempty"`
-	CreatedAt      string `json:"created_at"`
-	StartedAt      string `json:"started_at,omitempty"`
-	CompletedAt    string `json:"completed_at,omitempty"`
-	AbortedAt      string `json:"aborted_at,omitempty"`
+	CreatedAt      string `json:"createdAt"`
+	StartedAt      string `json:"startedAt,omitempty"`
+	CompletedAt    string `json:"completedAt,omitempty"`
+	AbortedAt      string `json:"abortedAt,omitempty"`
 }
 
 // CreateCampaignParams is the body for CampaignsResource.Create.
 type CreateCampaignParams struct {
 	Name              string `json:"name"`
-	AudienceID        string `json:"audience_id"`
+	AudienceID        string `json:"audienceId"`
 	Text              string `json:"text,omitempty"`
-	MediaURL          string `json:"media_url,omitempty"`
-	MediaCaption      string `json:"media_caption,omitempty"`
+	MediaURL          string `json:"mediaUrl,omitempty"`
+	MediaCaption      string `json:"mediaCaption,omitempty"`
 	From              string `json:"from,omitempty"`
-	OnMissingVariable string `json:"on_missing_variable,omitempty"`
+	OnMissingVariable string `json:"onMissingVariable,omitempty"`
 }
 
 // --- Webhooks ----------------------------------------------------------------
@@ -240,7 +240,7 @@ type Webhook struct {
 	Events      []string `json:"events"`
 	Description string   `json:"description,omitempty"`
 	Status      string   `json:"status"`
-	CreatedAt   string   `json:"created_at"`
+	CreatedAt   string   `json:"createdAt"`
 }
 
 // WebhookCreateResult is returned from Create / RotateSecret. It is a
@@ -254,7 +254,7 @@ type WebhookCreateResult struct {
 type WebhookEvent struct {
 	ID        string                 `json:"id"`
 	Type      string                 `json:"type"`
-	CreatedAt string                 `json:"created_at"`
+	CreatedAt string                 `json:"createdAt"`
 	Data      map[string]interface{} `json:"data"`
 }
 
@@ -284,31 +284,31 @@ type UpdateWebhookParams struct {
 type Chat struct {
 	ID            string  `json:"id"`
 	Name          *string `json:"name,omitempty"`
-	IsGroup       bool    `json:"is_group"`
-	IsNewsletter  bool    `json:"is_newsletter"`
-	LastMessageAt *string `json:"last_message_at,omitempty"`
-	UnreadCount   *int    `json:"unread_count,omitempty"`
-	MarkedUnread  bool    `json:"marked_unread"`
+	IsGroup       bool    `json:"isGroup"`
+	IsNewsletter  bool    `json:"isNewsletter"`
+	LastMessageAt *string `json:"lastMessageAt,omitempty"`
+	UnreadCount   *int    `json:"unreadCount,omitempty"`
+	MarkedUnread  bool    `json:"markedUnread"`
 }
 
 // Participant is a member of a group chat.
 type Participant struct {
-	ChatID       string `json:"chat_id"`
-	IsAdmin      bool   `json:"is_admin"`
-	IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
+	ChatID       string `json:"chatId"`
+	IsAdmin      bool   `json:"isAdmin"`
+	IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
 }
 
 // ChatMessage is a message returned by GET /v1/chats/{id}/messages.
 type ChatMessage struct {
 	Key       string `json:"key"`
-	ChatID    string `json:"chat_id"`
+	ChatID    string `json:"chatId"`
 	From      string `json:"from"`
 	Timestamp string `json:"timestamp,omitempty"`
 	Text      string `json:"text,omitempty"`
 	Type      string `json:"type"`
-	FromMe    bool   `json:"from_me"`
+	FromMe    bool   `json:"fromMe"`
 	Ack       int    `json:"ack,omitempty"`
-	MediaURL  string `json:"media_url,omitempty"`
+	MediaURL  string `json:"mediaUrl,omitempty"`
 	Caption   string `json:"caption,omitempty"`
 	Filename  string `json:"filename,omitempty"`
 }
@@ -325,7 +325,7 @@ const (
 	MediaUnavailableNoMedia        = "no_media"
 )
 
-// ChatMedia is the response from GET /v1/chats/{id}/messages/{key}/media.
+// ChatMedia is the response from GET /v1/messages/media/{waMessageKey}.
 //
 // MediaUnavailable is one of: expired | fetching | awaiting_sender | error |
 // no_media (or empty on success). Compare against the MediaUnavailable*
@@ -334,9 +334,9 @@ type ChatMedia struct {
 	URL              string `json:"url,omitempty"`
 	Mimetype         string `json:"mimetype,omitempty"`
 	Filename         string `json:"filename,omitempty"`
-	DataBase64       string `json:"data_base64,omitempty"`
-	OriginalQuality  *bool  `json:"original_quality,omitempty"`
-	MediaUnavailable string `json:"media_unavailable,omitempty"`
+	DataBase64       string `json:"dataBase64,omitempty"`
+	OriginalQuality  *bool  `json:"originalQuality,omitempty"`
+	MediaUnavailable string `json:"mediaUnavailable,omitempty"`
 }
 
 // ListChatMessagesParams is the query-param bundle for ChatsResource.ListMessages.
@@ -356,12 +356,12 @@ type OkResponse struct {
 	Ok bool `json:"ok"`
 }
 
-// ChatRef is the `{"chat_id": "..."}` envelope returned by ChatsResource.Open.
+// ChatRef is the `{"chatId": "..."}` envelope returned by ChatsResource.Open.
 type ChatRef struct {
-	ChatID string `json:"chat_id"`
+	ChatID string `json:"chatId"`
 }
 
-// MessageAck is the response from GET /v1/chats/{chat_id}/messages/{key}/ack.
+// MessageAck is the response from GET /v1/messages/ack/{waMessageKey}.
 //
 // Ack semantics: -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played.
 // nil means no engine response was available.
@@ -370,18 +370,18 @@ type MessageAck struct {
 }
 
 // LoadOlderMessagesResponse is the response from
-// POST /v1/chats/{chat_id}/messages/load_older.
+// POST /v1/messages/load_older/{chatId}.
 //
 // TotalMessages and Added are pointers because the OpenAPI declares them
 // nullable; CanLoadMore is required.
 type LoadOlderMessagesResponse struct {
-	TotalMessages *int `json:"total_messages"`
+	TotalMessages *int `json:"totalMessages"`
 	Added         *int `json:"added"`
-	CanLoadMore   bool `json:"can_load_more"`
+	CanLoadMore   bool `json:"canLoadMore"`
 }
 
 // MediaURLResponse is the response from
-// GET /v1/chats/{chat_id}/messages/{key}/media_url.
+// GET /v1/messages/media_url/{waMessageKey}.
 //
 // URL is a pointer because the OpenAPI declares it nullable; nil means the
 // engine could not produce a hosted URL.
@@ -391,7 +391,7 @@ type MediaURLResponse struct {
 
 // BatchMessageAcksParams is the body for ChatsResource.BatchMessageAcks.
 type BatchMessageAcksParams struct {
-	MessageKeys []string `json:"message_keys"`
+	MessageKeys []string `json:"messageKeys"`
 }
 
 // BatchMessageAckEntry is a single per-message ack envelope inside
@@ -404,17 +404,17 @@ type BatchMessageAckEntry struct {
 	Ack *int   `json:"ack"`
 }
 
-// BatchMessageAcksResponse is the response from POST /v1/chats/message_acks.
+// BatchMessageAcksResponse is the response from POST /v1/messages/acks.
 type BatchMessageAcksResponse struct {
 	Data []BatchMessageAckEntry `json:"data"`
 }
 
 // SendMessageInChatParams is the request body for ChatsResource.SendMessage
-// (POST /v1/chats/{chat_id}/messages).
+// (POST /v1/messages/{chatId}).
 //
 // The wire schema is a discriminated union on the `type` field — same shape
 // as CreateScheduledMessageParams minus `to` (derived from the URL path) and
-// `send_at` (this endpoint is fire-and-forget):
+// `sendAt` (this endpoint is fire-and-forget):
 //
 //	params := blueticks.SendMessageInChatParams{
 //	    Type: blueticks.MessageTypeText,
@@ -430,13 +430,13 @@ type SendMessageInChatParams struct {
 	Text string `json:"text,omitempty"`
 	// LinkPreview is optional when Type == "text".
 	// true (default) = auto-fetch; false = never attach; object = custom card.
-	LinkPreview interface{} `json:"link_preview,omitempty"`
+	LinkPreview interface{} `json:"linkPreview,omitempty"`
 	// Media is required when Type == "media".
 	Media *SendMediaObject `json:"media,omitempty"`
 	// Poll is required when Type == "poll".
 	Poll    *SendPollObject `json:"poll,omitempty"`
 	From    string          `json:"from,omitempty"`
-	ReplyTo string          `json:"reply_to,omitempty"`
+	ReplyTo string          `json:"replyTo,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -445,9 +445,9 @@ type SendMessageInChatParams struct {
 
 // Contact is a WhatsApp contact in the user's address book.
 type Contact struct {
-	ChatID     string `json:"chat_id"`
+	ChatID     string `json:"chatId"`
 	Name       string `json:"name,omitempty"`
-	IsBusiness bool   `json:"is_business"`
+	IsBusiness bool   `json:"isBusiness"`
 }
 
 // --- Groups ------------------------------------------------------------------
@@ -462,9 +462,9 @@ type Group struct {
 	Name             *string            `json:"name,omitempty"`
 	Description      *string            `json:"description,omitempty"`
 	Owner            *string            `json:"owner,omitempty"`
-	CreatedAt        *string            `json:"created_at,omitempty"`
-	LastMessageAt    *string            `json:"last_message_at,omitempty"`
-	ParticipantCount *int               `json:"participant_count,omitempty"`
+	CreatedAt        *string            `json:"createdAt,omitempty"`
+	LastMessageAt    *string            `json:"lastMessageAt,omitempty"`
+	ParticipantCount *int               `json:"participantCount,omitempty"`
 	Announce         *bool              `json:"announce,omitempty"`
 	Restrict         *bool              `json:"restrict,omitempty"`
 	Participants     []GroupParticipant `json:"participants,omitempty"`
@@ -473,9 +473,9 @@ type Group struct {
 // GroupParticipant is a single member of a Group as returned in
 // Group.Participants.
 type GroupParticipant struct {
-	ChatID       string  `json:"chat_id"`
-	IsAdmin      bool    `json:"is_admin"`
-	IsSuperAdmin bool    `json:"is_super_admin"`
+	ChatID       string  `json:"chatId"`
+	IsAdmin      bool    `json:"isAdmin"`
+	IsSuperAdmin bool    `json:"isSuperAdmin"`
 	Name         *string `json:"name,omitempty"`
 }
 
@@ -516,8 +516,8 @@ const (
 // ScheduledMessagesResource.List.
 type ScheduledMessagesPage struct {
 	Data       []ScheduledMessage `json:"data"`
-	HasMore    bool               `json:"has_more"`
-	NextCursor *string            `json:"next_cursor,omitempty"`
+	HasMore    bool               `json:"hasMore"`
+	NextCursor *string            `json:"nextCursor,omitempty"`
 }
 
 // MessageLinkPreview is the optional rich-preview card embedded in a
@@ -527,7 +527,7 @@ type ScheduledMessagesPage struct {
 type MessageLinkPreview struct {
 	Title        *string `json:"title"`
 	Description  *string `json:"description"`
-	CanonicalURL *string `json:"canonical_url"`
+	CanonicalURL *string `json:"canonicalUrl"`
 	Thumbnail    *string `json:"thumbnail"`
 }
 
@@ -547,19 +547,19 @@ type ScheduledMessage struct {
 	From          *string             `json:"from"`
 	Type          string              `json:"type"`
 	Text          *string             `json:"text"`
-	MediaURL      *string             `json:"media_url"`
-	MediaKind     *string             `json:"media_kind"`
-	PollQuestion  *string             `json:"poll_question"`
+	MediaURL      *string             `json:"mediaUrl"`
+	MediaKind     *string             `json:"mediaKind"`
+	PollQuestion  *string             `json:"pollQuestion"`
 	Status        string              `json:"status"`
-	SendAt        *string             `json:"send_at"`
-	CreatedAt     string              `json:"created_at"`
-	ConfirmedAt   *string             `json:"confirmed_at"`
-	ReceivedAt    *string             `json:"received_at"`
-	ReadAt        *string             `json:"read_at"`
-	PlayedAt      *string             `json:"played_at"`
-	FailedAt      *string             `json:"failed_at"`
-	FailureReason *string             `json:"failure_reason"`
-	LinkPreview   *MessageLinkPreview `json:"link_preview"`
+	SendAt        *string             `json:"sendAt"`
+	CreatedAt     string              `json:"createdAt"`
+	ConfirmedAt   *string             `json:"confirmedAt"`
+	ReceivedAt    *string             `json:"receivedAt"`
+	ReadAt        *string             `json:"readAt"`
+	PlayedAt      *string             `json:"playedAt"`
+	FailedAt      *string             `json:"failedAt"`
+	FailureReason *string             `json:"failureReason"`
+	LinkPreview   *MessageLinkPreview `json:"linkPreview"`
 }
 
 // SendMediaObject is the nested media descriptor inside
@@ -576,7 +576,7 @@ type SendMediaObject struct {
 type SendPollObject struct {
 	Question      string   `json:"question"`
 	Options       []string `json:"options"`
-	AllowMultiple bool     `json:"allow_multiple,omitempty"`
+	AllowMultiple bool     `json:"allowMultiple,omitempty"`
 }
 
 // CreateScheduledMessageParams is the request body for
@@ -600,14 +600,14 @@ type CreateScheduledMessageParams struct {
 	Text string `json:"text,omitempty"`
 	// LinkPreview is optional when Type == "text".
 	// true (default) = auto-fetch; false = never attach; object = custom card.
-	LinkPreview interface{} `json:"link_preview,omitempty"`
+	LinkPreview interface{} `json:"linkPreview,omitempty"`
 	// Media is required when Type == "media".
 	Media *SendMediaObject `json:"media,omitempty"`
 	// Poll is required when Type == "poll".
 	Poll    *SendPollObject `json:"poll,omitempty"`
-	SendAt  string          `json:"send_at,omitempty"`
+	SendAt  string          `json:"sendAt,omitempty"`
 	From    string          `json:"from,omitempty"`
-	ReplyTo string          `json:"reply_to,omitempty"`
+	ReplyTo string          `json:"replyTo,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -629,9 +629,9 @@ type ListScheduledMessagesParams struct {
 // advanced past the editable window.
 type UpdateScheduledMessageParams struct {
 	Text         *string `json:"text,omitempty"`
-	MediaURL     *string `json:"media_url,omitempty"`
-	MediaCaption *string `json:"media_caption,omitempty"`
-	SendAt       *string `json:"send_at,omitempty"`
+	MediaURL     *string `json:"mediaUrl,omitempty"`
+	MediaCaption *string `json:"mediaCaption,omitempty"`
+	SendAt       *string `json:"sendAt,omitempty"`
 }
 
 // --- Engines -----------------------------------------------------------------
@@ -641,7 +641,7 @@ type EngineStatus struct {
 	Connected bool   `json:"connected"`
 	State     string `json:"state,omitempty"`
 	Stream    string `json:"stream,omitempty"`
-	HasSynced *bool  `json:"has_synced,omitempty"`
+	HasSynced *bool  `json:"hasSynced,omitempty"`
 }
 
 // --- ID-only delete envelope -------------------------------------------------

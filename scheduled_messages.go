@@ -47,7 +47,7 @@ func (r *ScheduledMessagesResource) List(ctx context.Context, params ListSchedul
 		q.Set("cursor", params.Cursor)
 	}
 	if params.ChatID != "" {
-		q.Set("chat_id", params.ChatID)
+		q.Set("chatId", params.ChatID)
 	}
 	if params.Status != "" {
 		q.Set("status", params.Status)

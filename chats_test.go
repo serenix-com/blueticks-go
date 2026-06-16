@@ -17,7 +17,7 @@ func TestChatsList(t *testing.T) {
 		if r.URL.Query().Get("query") != "alice" {
 			t.Errorf("missing query param")
 		}
-		jsonResponse(w, `{"data":[{"id":"c1@c.us","name":"Alice","is_group":false}],"has_more":false}`)
+		jsonResponse(w, `{"data":[{"id":"c1@c.us","name":"Alice","isGroup":false}],"hasMore":false}`)
 	})
 	got, err := c.Chats.List(context.Background(), ListChatsParams{Query: "alice"})
 	if err != nil {
@@ -33,7 +33,7 @@ func TestChatsListParticipants(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/chats/g1@g.us/participants" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"data":[{"chat_id":"c1@c.us","is_admin":true,"is_super_admin":false}],"has_more":false,"next_cursor":null}`)
+		jsonResponse(w, `{"data":[{"chatId":"c1@c.us","isAdmin":true,"isSuperAdmin":false}],"hasMore":false,"nextCursor":null}`)
 	})
 	got, err := c.Chats.ListParticipants(context.Background(), "g1@g.us", ListParticipantsParams{Limit: 50})
 	if err != nil {
@@ -49,13 +49,13 @@ func TestChatsListMessagesEncodesMessageTypes(t *testing.T) {
 		if !strings.HasPrefix(r.URL.Path, "/v1/chats/") || !strings.HasSuffix(r.URL.Path, "/messages") {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		if r.URL.Query().Get("message_types") != "image,document" {
-			t.Errorf("expected comma-joined message_types, got %q", r.URL.Query().Get("message_types"))
+		if r.URL.Query().Get("messageTypes") != "image,document" {
+			t.Errorf("expected comma-joined messageTypes, got %q", r.URL.Query().Get("messageTypes"))
 		}
 		if r.URL.Query().Get("order") != "asc" {
 			t.Errorf("expected order=asc, got %q", r.URL.Query().Get("order"))
 		}
-		jsonResponse(w, `{"data":[],"has_more":false}`)
+		jsonResponse(w, `{"data":[],"hasMore":false}`)
 	})
 	_, err := c.Chats.ListMessages(context.Background(), "c1@c.us", ListChatMessagesParams{
 		Order: "asc", MessageTypes: []string{"image", "document"},
@@ -71,15 +71,18 @@ func TestChatsActions(t *testing.T) {
 		case r.URL.Path == "/v1/chats/c1@c.us/mark_read":
 			jsonResponse(w, `{"ok":true}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/open":
-			jsonResponse(w, `{"chat_id":"c1@c.us"}`)
-		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/reactions":
+			jsonResponse(w, `{"chatId":"c1@c.us"}`)
+		case r.URL.Path == "/v1/messages/reactions/k1":
 			jsonResponse(w, `{"ok":true}`)
-		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/ack":
+		case r.URL.Path == "/v1/messages/ack/k1":
+			if got := r.URL.Query().Get("chatId"); got != "c1@c.us" {
+				t.Errorf("expected chatId query, got %q", got)
+			}
 			jsonResponse(w, `{"ack":3}`)
-		case r.URL.Path == "/v1/chats/c1@c.us/messages/k1/media_url":
+		case r.URL.Path == "/v1/messages/media_url/k1":
 			jsonResponse(w, `{"url":"https://example.com/m.jpg"}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/messages/load_older":
-			jsonResponse(w, `{"total_messages":120,"added":40,"can_load_more":true}`)
+			jsonResponse(w, `{"totalMessages":120,"added":40,"canLoadMore":true}`)
 		case r.URL.Path == "/v1/chats/message_acks":
 			jsonResponse(w, `{"data":[{"key":"k1","ack":3}]}`)
 		default:
@@ -96,15 +99,15 @@ func TestChatsActions(t *testing.T) {
 	if err != nil || op.ChatID != "c1@c.us" {
 		t.Fatalf("Open: %v %+v", err, op)
 	}
-	rx, err := c.Chats.React(ctx, "c1@c.us", "k1", "🔥")
+	rx, err := c.Chats.React(ctx, "k1", "", "🔥")
 	if err != nil || !rx.Ok {
 		t.Fatalf("React: %v %+v", err, rx)
 	}
-	ack, err := c.Chats.GetMessageAck(ctx, "c1@c.us", "k1")
+	ack, err := c.Chats.GetMessageAck(ctx, "k1", "c1@c.us")
 	if err != nil || ack.Ack == nil || *ack.Ack != 3 {
 		t.Fatalf("GetMessageAck: %v %+v", err, ack)
 	}
-	mu, err := c.Chats.GetMediaURL(ctx, "c1@c.us", "k1")
+	mu, err := c.Chats.GetMediaURL(ctx, "k1", "")
 	if err != nil || mu.URL == nil || *mu.URL != "https://example.com/m.jpg" {
 		t.Fatalf("GetMediaURL: %v %+v", err, mu)
 	}
@@ -167,10 +170,10 @@ func TestChatsSendMessageText(t *testing.T) {
 		if _, present := body["to"]; present {
 			t.Errorf("body must not include `to` (derived from path)")
 		}
-		if _, present := body["send_at"]; present {
-			t.Errorf("body must not include `send_at` (fire-and-forget)")
+		if _, present := body["sendAt"]; present {
+			t.Errorf("body must not include `sendAt` (fire-and-forget)")
 		}
-		jsonResponse(w, `{"id":null,"key":"3EB0_text_1","to":"c1@c.us","type":"text","text":"hello","status":"sent","created_at":"2026-05-28T00:00:00Z"}`)
+		jsonResponse(w, `{"id":null,"key":"3EB0_text_1","to":"c1@c.us","type":"text","text":"hello","status":"sent","createdAt":"2026-05-28T00:00:00Z"}`)
 	})
 	got, err := c.Chats.SendMessage(context.Background(), "c1@c.us", SendMessageInChatParams{
 		Type:           MessageTypeText,
@@ -205,7 +208,7 @@ func TestChatsSendMessageMedia(t *testing.T) {
 		if !ok || media["url"] != "https://example.com/cat.jpg" || media["kind"] != "image" {
 			t.Errorf("unexpected media block: %+v", body["media"])
 		}
-		jsonResponse(w, `{"id":null,"key":"3EB0_media_1","to":"c1@c.us","type":"media","media_url":"https://example.com/cat.jpg","media_kind":"image","status":"sent","created_at":"2026-05-28T00:00:00Z"}`)
+		jsonResponse(w, `{"id":null,"key":"3EB0_media_1","to":"c1@c.us","type":"media","mediaUrl":"https://example.com/cat.jpg","mediaKind":"image","status":"sent","createdAt":"2026-05-28T00:00:00Z"}`)
 	})
 	got, err := c.Chats.SendMessage(context.Background(), "c1@c.us", SendMessageInChatParams{
 		Type: MessageTypeMedia,
@@ -219,7 +222,7 @@ func TestChatsSendMessageMedia(t *testing.T) {
 		t.Fatalf("SendMessage: %v", err)
 	}
 	if got.MediaURL == nil || *got.MediaURL != "https://example.com/cat.jpg" {
-		t.Fatalf("unexpected media_url: %+v", got.MediaURL)
+		t.Fatalf("unexpected mediaUrl: %+v", got.MediaURL)
 	}
 }
 
@@ -241,7 +244,7 @@ func TestChatsSendMessagePoll(t *testing.T) {
 		if !ok || len(opts) != 2 || opts[0] != "yes" || opts[1] != "no" {
 			t.Errorf("unexpected poll.options: %+v", poll["options"])
 		}
-		jsonResponse(w, `{"id":null,"key":"3EB0_poll_1","to":"c1@c.us","type":"poll","poll_question":"Pizza?","status":"sent","created_at":"2026-05-28T00:00:00Z"}`)
+		jsonResponse(w, `{"id":null,"key":"3EB0_poll_1","to":"c1@c.us","type":"poll","pollQuestion":"Pizza?","status":"sent","createdAt":"2026-05-28T00:00:00Z"}`)
 	})
 	got, err := c.Chats.SendMessage(context.Background(), "c1@c.us", SendMessageInChatParams{
 		Type: MessageTypePoll,
@@ -254,7 +257,7 @@ func TestChatsSendMessagePoll(t *testing.T) {
 		t.Fatalf("SendMessage: %v", err)
 	}
 	if got.PollQuestion == nil || *got.PollQuestion != "Pizza?" {
-		t.Fatalf("unexpected poll_question: %+v", got.PollQuestion)
+		t.Fatalf("unexpected pollQuestion: %+v", got.PollQuestion)
 	}
 }
 

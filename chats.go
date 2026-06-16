@@ -133,7 +133,7 @@ func (r *ChatsResource) Open(ctx context.Context, chatID string) (*ChatRef, erro
 // SendMessage sends a message immediately to a specific chat.
 //
 // The body is the same discriminated union as POST /v1/scheduled-messages minus
-// `to` (derived from the URL path) and `send_at` (this endpoint is
+// `to` (derived from the URL path) and `sendAt` (this endpoint is
 // fire-and-forget). Variants: "text", "media", "poll". The dispatch is direct
 // — no DB row is created; the response carries the WhatsApp wire key under
 // `key`. For scheduled or queue-managed sends use ScheduledMessagesResource.Create
@@ -180,7 +180,7 @@ func (r *ChatsResource) ListMessages(ctx context.Context, chatID string, params 
 		q.Set("cursor", params.Cursor)
 	}
 	if len(params.MessageTypes) > 0 {
-		q.Set("message_types", strings.Join(params.MessageTypes, ","))
+		q.Set("messageTypes", strings.Join(params.MessageTypes, ","))
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -197,11 +197,19 @@ func (r *ChatsResource) ListMessages(ctx context.Context, chatID string, params 
 	return out, nil
 }
 
-// GetMessage retrieves a single message by WhatsApp message key.
-func (r *ChatsResource) GetMessage(ctx context.Context, chatID, key string) (*ChatMessage, error) {
+// GetMessage retrieves a single message by its complete WhatsApp message key.
+//
+// Pass an empty chatID to omit the optional chatId query param (the engine
+// resolves the chat from the key when possible).
+func (r *ChatsResource) GetMessage(ctx context.Context, waMessageKey, chatID string) (*ChatMessage, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key),
+		path:   "/v1/messages/" + url.PathEscape(waMessageKey),
+		query:  q,
 	})
 	if err != nil {
 		return nil, err
@@ -216,10 +224,17 @@ func (r *ChatsResource) GetMessage(ctx context.Context, chatID, key string) (*Ch
 // GetMessageAck returns the WhatsApp ack value for a sent message:
 // -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played; nil when no
 // engine response.
-func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (*MessageAck, error) {
+//
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) GetMessageAck(ctx context.Context, waMessageKey, chatID string) (*MessageAck, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/ack",
+		path:   "/v1/messages/ack/" + url.PathEscape(waMessageKey),
+		query:  q,
 	})
 	if err != nil {
 		return nil, err
@@ -233,10 +248,17 @@ func (r *ChatsResource) GetMessageAck(ctx context.Context, chatID, key string) (
 
 // React adds or replaces a reaction emoji on a message. Pass an empty
 // emoji to clear an existing reaction.
-func (r *ChatsResource) React(ctx context.Context, chatID, key, emoji string) (*OkResponse, error) {
+//
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) React(ctx context.Context, waMessageKey, chatID, emoji string) (*OkResponse, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/reactions",
+		path:   "/v1/messages/reactions/" + url.PathEscape(waMessageKey),
+		query:  q,
 		body:   map[string]string{"emoji": emoji},
 	})
 	if err != nil {
@@ -271,10 +293,17 @@ func (r *ChatsResource) LoadOlderMessages(ctx context.Context, chatID string) (*
 // GetMedia downloads message media. May return base64 inline depending on
 // configuration / media kind; check ChatMedia.MediaUnavailable for failure
 // kinds.
-func (r *ChatsResource) GetMedia(ctx context.Context, chatID, key string) (*ChatMedia, error) {
+//
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) GetMedia(ctx context.Context, waMessageKey, chatID string) (*ChatMedia, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/media",
+		path:   "/v1/messages/media/" + url.PathEscape(waMessageKey),
+		query:  q,
 	})
 	if err != nil {
 		return nil, err
@@ -289,10 +318,17 @@ func (r *ChatsResource) GetMedia(ctx context.Context, chatID, key string) (*Chat
 // GetMediaURL returns a hosted URL for the message media without inlining
 // bytes. Faster + cheaper than GetMedia when the caller can fetch the URL
 // themselves.
-func (r *ChatsResource) GetMediaURL(ctx context.Context, chatID, key string) (*MediaURLResponse, error) {
+//
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) GetMediaURL(ctx context.Context, waMessageKey, chatID string) (*MediaURLResponse, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/" + url.PathEscape(key) + "/media_url",
+		path:   "/v1/messages/media_url/" + url.PathEscape(waMessageKey),
+		query:  q,
 	})
 	if err != nil {
 		return nil, err

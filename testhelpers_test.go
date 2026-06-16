@@ -29,7 +29,7 @@ func newTestServer(t *testing.T, handler http.HandlerFunc) (*Client, *httptest.S
 func unauthorizedHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusUnauthorized)
-	_, _ = w.Write([]byte(`{"error":{"code":"unauthorized","message":"bad key","request_id":"req_1"}}`))
+	_, _ = w.Write([]byte(`{"error":{"code":"unauthorized","message":"bad key","requestId":"req_1"}}`))
 }
 
 // expectAuthError fails if err doesn't unwrap to ErrAuthentication.

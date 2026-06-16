@@ -3,7 +3,7 @@
     "schemas": {
       "AccountResponse": {
         "properties": {
-          "created_at": {
+          "createdAt": {
             "description": "RFC 3339 timestamp of account creation.",
             "format": "date-time",
             "type": "string"
@@ -20,20 +20,26 @@
             "description": "IANA timezone (e.g. \"America/New_York\"), or null if unset.",
             "nullable": true,
             "type": "string"
+          },
+          "userEmail": {
+            "description": "Email address of the user the API key belongs to, or null if unavailable.",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
           "id",
           "name",
+          "userEmail",
           "timezone",
-          "created_at"
+          "createdAt"
         ],
         "type": "object"
       },
       "AddMemberRequest": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "type": "string"
           },
           "participants": {
@@ -85,11 +91,11 @@
       "AudienceResponse": {
         "additionalProperties": false,
         "properties": {
-          "contact_count": {
+          "contactCount": {
             "minimum": 0,
             "type": "integer"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -103,8 +109,8 @@
         "required": [
           "id",
           "name",
-          "contact_count",
-          "created_at"
+          "contactCount",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -129,11 +135,11 @@
       "BatchMessageAcksRequest": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "minLength": 1,
             "type": "string"
           },
-          "message_keys": {
+          "messageKeys": {
             "items": {
               "minLength": 1,
               "type": "string"
@@ -144,35 +150,35 @@
           }
         },
         "required": [
-          "message_keys"
+          "messageKeys"
         ],
         "type": "object"
       },
       "CampaignResponse": {
         "additionalProperties": false,
         "properties": {
-          "aborted_at": {
+          "abortedAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
-          "audience_id": {
+          "audienceId": {
             "type": "string"
           },
-          "completed_at": {
+          "completedAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string"
           },
-          "delivered_count": {
+          "deliveredCount": {
             "minimum": 0,
             "type": "integer"
           },
-          "failed_count": {
+          "failedCount": {
             "minimum": 0,
             "type": "integer"
           },
@@ -186,15 +192,15 @@
           "name": {
             "type": "string"
           },
-          "read_count": {
+          "readCount": {
             "minimum": 0,
             "type": "integer"
           },
-          "sent_count": {
+          "sentCount": {
             "minimum": 0,
             "type": "integer"
           },
-          "started_at": {
+          "startedAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -210,7 +216,7 @@
             ],
             "type": "string"
           },
-          "total_count": {
+          "totalCount": {
             "minimum": 0,
             "type": "integer"
           }
@@ -218,18 +224,18 @@
         "required": [
           "id",
           "name",
-          "audience_id",
+          "audienceId",
           "status",
-          "total_count",
-          "sent_count",
-          "delivered_count",
-          "read_count",
-          "failed_count",
+          "totalCount",
+          "sentCount",
+          "deliveredCount",
+          "readCount",
+          "failedCount",
           "from",
-          "created_at",
-          "started_at",
-          "completed_at",
-          "aborted_at"
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "abortedAt"
         ],
         "type": "object"
       },
@@ -247,7 +253,7 @@
       "ChangeLabelsRequest": {
         "additionalProperties": false,
         "properties": {
-          "label_ids": {
+          "labelIds": {
             "description": "Full replacement set of label ids for this chat.",
             "items": {
               "maxLength": 64,
@@ -259,7 +265,7 @@
           }
         },
         "required": [
-          "label_ids"
+          "labelIds"
         ],
         "type": "object"
       },
@@ -269,25 +275,25 @@
           "id": {
             "type": "string"
           },
-          "is_group": {
+          "isGroup": {
             "type": "boolean"
           },
-          "is_newsletter": {
+          "isNewsletter": {
             "type": "boolean"
           },
-          "last_message_at": {
+          "lastMessageAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           },
-          "marked_unread": {
+          "markedUnread": {
             "type": "boolean"
           },
           "name": {
             "nullable": true,
             "type": "string"
           },
-          "unread_count": {
+          "unreadCount": {
             "minimum": 0,
             "nullable": true,
             "type": "integer"
@@ -296,11 +302,11 @@
         "required": [
           "id",
           "name",
-          "is_group",
-          "is_newsletter",
-          "last_message_at",
-          "unread_count",
-          "marked_unread"
+          "isGroup",
+          "isNewsletter",
+          "lastMessageAt",
+          "unreadCount",
+          "markedUnread"
         ],
         "type": "object"
       },
@@ -364,12 +370,12 @@
       "ChatRef": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "type": "string"
           }
         },
         "required": [
-          "chat_id"
+          "chatId"
         ],
         "type": "object"
       },
@@ -397,7 +403,7 @@
       "ContactResponse": {
         "additionalProperties": false,
         "properties": {
-          "added_at": {
+          "addedAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -418,7 +424,7 @@
           "id",
           "to",
           "variables",
-          "added_at"
+          "addedAt"
         ],
         "type": "object"
       },
@@ -464,7 +470,7 @@
       "CreateCampaignRequest": {
         "additionalProperties": false,
         "properties": {
-          "audience_id": {
+          "audienceId": {
             "description": "ID of the audience to target. Each audience contact contributes one outgoing message.",
             "minLength": 1,
             "type": "string"
@@ -474,13 +480,13 @@
             "pattern": "^\\+[1-9]\\d{6,14}$",
             "type": "string"
           },
-          "media_caption": {
-            "description": "Caption for the media attachment. Requires media_url.",
+          "mediaCaption": {
+            "description": "Caption for the media attachment. Requires mediaUrl.",
             "maxLength": 1024,
             "minLength": 1,
             "type": "string"
           },
-          "media_url": {
+          "mediaUrl": {
             "description": "Public https URL of an image/video/document to attach.",
             "format": "uri",
             "maxLength": 2048,
@@ -492,7 +498,7 @@
             "minLength": 1,
             "type": "string"
           },
-          "on_missing_variable": {
+          "onMissingVariable": {
             "description": "Behavior when a template references a variable that is not present on a contact:\n  - `fail` (default): reject the request at create time; no messages are sent. Returns 400 with `data.examples` listing offending contacts.\n  - `skip`: accept the campaign; contacts missing variables receive the message with literal `{token}` left in place.",
             "enum": [
               "fail",
@@ -509,7 +515,7 @@
         },
         "required": [
           "name",
-          "audience_id"
+          "audienceId"
         ],
         "type": "object"
       },
@@ -621,10 +627,14 @@
                   "description": "Whether this engine is currently online and serving requests.",
                   "type": "boolean"
                 },
-                "has_synced": {
+                "hasSynced": {
                   "description": "Whether the engine has completed its initial history sync.",
                   "nullable": true,
                   "type": "boolean"
+                },
+                "id": {
+                  "description": "Stable id of this engine session (its MQTT presence client id). Same id space as ping's whatsapp_connections[].id.",
+                  "type": "string"
                 },
                 "state": {
                   "description": "Engine-side connection state (e.g. CONNECTED, OPENING, PAIRING). Null when unknown.",
@@ -635,13 +645,23 @@
                   "description": "Underlying WA stream state. Null when unknown.",
                   "nullable": true,
                   "type": "string"
+                },
+                "type": {
+                  "description": "Engine kind. \"gateway\" = a remote, server-side engine (Blueticks 24/7 gateway / baileys pod). \"regular\" = the user's own WhatsApp Web browser extension.",
+                  "enum": [
+                    "gateway",
+                    "regular"
+                  ],
+                  "type": "string"
                 }
               },
               "required": [
+                "id",
+                "type",
                 "connected",
                 "state",
                 "stream",
-                "has_synced"
+                "hasSynced"
               ],
               "type": "object"
             },
@@ -664,10 +684,14 @@
             "description": "Whether this engine is currently online and serving requests.",
             "type": "boolean"
           },
-          "has_synced": {
+          "hasSynced": {
             "description": "Whether the engine has completed its initial history sync.",
             "nullable": true,
             "type": "boolean"
+          },
+          "id": {
+            "description": "Stable id of this engine session (its MQTT presence client id). Same id space as ping's whatsapp_connections[].id.",
+            "type": "string"
           },
           "state": {
             "description": "Engine-side connection state (e.g. CONNECTED, OPENING, PAIRING). Null when unknown.",
@@ -678,13 +702,23 @@
             "description": "Underlying WA stream state. Null when unknown.",
             "nullable": true,
             "type": "string"
+          },
+          "type": {
+            "description": "Engine kind. \"gateway\" = a remote, server-side engine (Blueticks 24/7 gateway / baileys pod). \"regular\" = the user's own WhatsApp Web browser extension.",
+            "enum": [
+              "gateway",
+              "regular"
+            ],
+            "type": "string"
           }
         },
         "required": [
+          "id",
+          "type",
           "connected",
           "state",
           "stream",
-          "has_synced"
+          "hasSynced"
         ],
         "type": "object"
       },
@@ -730,7 +764,7 @@
                 "description": "Human-readable description of what went wrong.",
                 "type": "string"
               },
-              "request_id": {
+              "requestId": {
                 "description": "Server-assigned request id; pass this when filing support tickets so engineering can trace the failure.",
                 "nullable": true,
                 "type": "string"
@@ -739,7 +773,7 @@
             "required": [
               "code",
               "message",
-              "request_id"
+              "requestId"
             ],
             "type": "object"
           },
@@ -799,7 +833,7 @@
                 "description": "Human-readable description of what went wrong.",
                 "type": "string"
               },
-              "request_id": {
+              "requestId": {
                 "description": "Server-assigned request id; pass this when filing support tickets so engineering can trace the failure.",
                 "nullable": true,
                 "type": "string"
@@ -808,7 +842,7 @@
             "required": [
               "code",
               "message",
-              "request_id"
+              "requestId"
             ],
             "type": "object"
           },
@@ -858,7 +892,7 @@
             "nullable": true,
             "type": "boolean"
           },
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -870,7 +904,7 @@
           "id": {
             "type": "string"
           },
-          "last_message_at": {
+          "lastMessageAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -883,7 +917,7 @@
             "nullable": true,
             "type": "string"
           },
-          "participant_count": {
+          "participantCount": {
             "minimum": 0,
             "nullable": true,
             "type": "integer"
@@ -892,13 +926,13 @@
             "items": {
               "additionalProperties": false,
               "properties": {
-                "chat_id": {
+                "chatId": {
                   "type": "string"
                 },
-                "is_admin": {
+                "isAdmin": {
                   "type": "boolean"
                 },
-                "is_super_admin": {
+                "isSuperAdmin": {
                   "type": "boolean"
                 },
                 "name": {
@@ -907,9 +941,9 @@
                 }
               },
               "required": [
-                "chat_id",
-                "is_admin",
-                "is_super_admin",
+                "chatId",
+                "isAdmin",
+                "isSuperAdmin",
                 "name"
               ],
               "type": "object"
@@ -927,9 +961,9 @@
           "name",
           "description",
           "owner",
-          "created_at",
-          "last_message_at",
-          "participant_count",
+          "createdAt",
+          "lastMessageAt",
+          "participantCount",
           "announce",
           "restrict",
           "participants"
@@ -943,13 +977,13 @@
       "GroupParticipant": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "type": "string"
           },
-          "is_admin": {
+          "isAdmin": {
             "type": "boolean"
           },
-          "is_super_admin": {
+          "isSuperAdmin": {
             "type": "boolean"
           },
           "name": {
@@ -958,9 +992,9 @@
           }
         },
         "required": [
-          "chat_id",
-          "is_admin",
-          "is_super_admin",
+          "chatId",
+          "isAdmin",
+          "isSuperAdmin",
           "name"
         ],
         "type": "object"
@@ -1005,15 +1039,15 @@
             ],
             "type": "string"
           },
-          "include_extended_info": {
+          "includeExtendedInfo": {
             "description": "Include extended chat metadata (engine-side opt-in).",
             "type": "boolean"
           },
-          "include_last_message": {
+          "includeLastMessage": {
             "description": "Include the last message snippet on each chat row.",
             "type": "boolean"
           },
-          "include_without_name": {
+          "includeWithoutName": {
             "description": "Include chats with no resolved name (default: skipped).",
             "type": "boolean"
           },
@@ -1139,25 +1173,36 @@
             "nullable": true,
             "type": "integer"
           },
-          "can_load_more": {
+          "canLoadMore": {
             "type": "boolean"
           },
-          "total_messages": {
+          "error": {
+            "description": "Human-readable reason older messages could not be loaded from the phone; null when the pull succeeded or the chat is already fully synced.",
+            "nullable": true,
+            "type": "string"
+          },
+          "historyUnavailable": {
+            "description": "True when no older messages could be pulled because the phone reported it has no retrievable history for this chat (or the phone is offline). When true, `added` is 0, `canLoadMore` is false, and `error` carries the reason. This is distinct from a chat that is simply already fully synced (historyUnavailable=false, added=0).",
+            "type": "boolean"
+          },
+          "totalMessages": {
             "nullable": true,
             "type": "integer"
           }
         },
         "required": [
-          "total_messages",
+          "totalMessages",
           "added",
-          "can_load_more"
+          "canLoadMore",
+          "historyUnavailable",
+          "error"
         ],
         "type": "object"
       },
       "Media": {
         "additionalProperties": false,
         "properties": {
-          "data_base64": {
+          "dataBase64": {
             "nullable": true,
             "type": "string"
           },
@@ -1165,7 +1210,7 @@
             "nullable": true,
             "type": "string"
           },
-          "media_unavailable": {
+          "mediaUnavailable": {
             "description": "Set when the bytes could not be downloaded or never existed. \"expired\" = WA aged the file out of CDN retention (typically older than ~30 days for documents) and there is nothing to retry. \"fetching\" = WA is mid-download from its CDN — transient, the server already retried for ~10s; calling again in a few seconds usually resolves to bytes. \"awaiting_sender\" = WA's CDN does not have the file but has asked the sender's device to reupload it. The reupload only completes when the sender's WhatsApp client is open and online; closed/backgrounded apps block it indefinitely. Tell the user to ask the sender to open WhatsApp; do not poll. \"error\" = unexpected failure; \"no_media\" = the message is text-only / revoked / location / vcard, i.e. it never carried media — caller should not have invoked this tool on this messageKey. Absent when bytes were not needed or when the fetch succeeded.",
             "enum": [
               "expired",
@@ -1181,7 +1226,7 @@
             "nullable": true,
             "type": "string"
           },
-          "original_quality": {
+          "originalQuality": {
             "description": "Set to false when the bytes returned are NOT the original sender uploaded — i.e. WA released the original from memory and we synthesized from a smaller WA-generated preview (#113). Currently only happens for own-sent newsletter media (messages you sent to a @newsletter chat). When absent or true, the bytes are the genuine original. Consumers can use this to warn users / decide whether to retry from a different source.",
             "nullable": true,
             "type": "boolean"
@@ -1195,9 +1240,9 @@
           "url",
           "mimetype",
           "filename",
-          "data_base64",
-          "original_quality",
-          "media_unavailable"
+          "dataBase64",
+          "originalQuality",
+          "mediaUnavailable"
         ],
         "type": "object"
       },
@@ -1493,7 +1538,7 @@
       "MuteChatRequest": {
         "additionalProperties": false,
         "properties": {
-          "unmute_at": {
+          "unmuteAt": {
             "description": "ISO 8601 timestamp at which the chat auto-unmutes. Omit for \"forever\".",
             "format": "date-time",
             "type": "string"
@@ -1504,18 +1549,18 @@
       "MuteState": {
         "additionalProperties": false,
         "properties": {
-          "is_muted": {
+          "isMuted": {
             "type": "boolean"
           },
-          "mute_expiration_at": {
+          "muteExpirationAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
           }
         },
         "required": [
-          "is_muted",
-          "mute_expiration_at"
+          "isMuted",
+          "muteExpirationAt"
         ],
         "type": "object"
       },
@@ -1527,7 +1572,7 @@
       "NewsletterResponse": {
         "additionalProperties": false,
         "properties": {
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "nullable": true,
             "type": "string"
@@ -1574,7 +1619,7 @@
           "name",
           "description",
           "owner",
-          "created_at",
+          "createdAt",
           "subscribers",
           "invite",
           "verification"
@@ -1632,19 +1677,19 @@
       "Participant": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "type": "string"
           },
-          "is_admin": {
+          "isAdmin": {
             "type": "boolean"
           },
-          "is_super_admin": {
+          "isSuperAdmin": {
             "type": "boolean"
           }
         },
         "required": [
-          "chat_id",
-          "is_admin"
+          "chatId",
+          "isAdmin"
         ],
         "type": "object"
       },
@@ -1741,7 +1786,7 @@
       "PingResponse": {
         "additionalProperties": false,
         "properties": {
-          "account_id": {
+          "accountId": {
             "description": "The account (workspace) the API key belongs to.",
             "type": "string"
           },
@@ -1753,10 +1798,10 @@
             "type": "string"
           },
           "message": {
-            "description": "Present only when whatsapp_connections is empty; explains the empty state.",
+            "description": "Present only when whatsappConnections is empty; explains the empty state.",
             "type": "string"
           },
-          "whatsapp_connections": {
+          "whatsappConnections": {
             "description": "WhatsApp engines currently connected for this account. Empty means no WhatsApp is connected.",
             "items": {
               "additionalProperties": false,
@@ -1793,15 +1838,15 @@
         },
         "required": [
           "api",
-          "account_id",
-          "whatsapp_connections"
+          "accountId",
+          "whatsappConnections"
         ],
         "type": "object"
       },
       "PinnedMessage": {
         "additionalProperties": false,
         "properties": {
-          "chat_id": {
+          "chatId": {
             "type": "string"
           },
           "key": {
@@ -1814,7 +1859,7 @@
         },
         "required": [
           "key",
-          "chat_id",
+          "chatId",
           "text"
         ],
         "type": "object"
@@ -1834,7 +1879,7 @@
             "nullable": true,
             "type": "string"
           },
-          "chat_id": {
+          "chatId": {
             "type": "string"
           },
           "filename": {
@@ -1844,16 +1889,16 @@
           "from": {
             "type": "string"
           },
-          "from_me": {
+          "fromMe": {
             "type": "boolean"
           },
           "key": {
             "type": "string"
           },
-          "link_preview": {
+          "linkPreview": {
             "nullable": true,
             "properties": {
-              "canonical_url": {
+              "canonicalUrl": {
                 "nullable": true,
                 "type": "string"
               },
@@ -1873,12 +1918,12 @@
             "required": [
               "title",
               "description",
-              "canonical_url",
+              "canonicalUrl",
               "thumbnail"
             ],
             "type": "object"
           },
-          "media_url": {
+          "mediaUrl": {
             "nullable": true,
             "type": "string"
           },
@@ -1897,14 +1942,14 @@
         },
         "required": [
           "key",
-          "chat_id",
+          "chatId",
           "from",
           "timestamp",
           "text",
           "type",
-          "from_me",
+          "fromMe",
           "ack",
-          "media_url",
+          "mediaUrl",
           "caption",
           "filename"
         ],
@@ -2170,16 +2215,16 @@
       "SetPictureRequest": {
         "additionalProperties": false,
         "properties": {
-          "file_data_url": {
+          "fileDataUrl": {
             "maxLength": 20971520,
             "minLength": 1,
             "type": "string"
           },
-          "file_mime_type": {
+          "fileMimeType": {
             "maxLength": 127,
             "type": "string"
           },
-          "file_name": {
+          "fileName": {
             "maxLength": 255,
             "type": "string"
           },
@@ -2228,7 +2273,7 @@
               "announce": {
                 "type": "boolean"
               },
-              "edit_info_admins_only": {
+              "editInfoAdminsOnly": {
                 "type": "boolean"
               },
               "restrict": {
@@ -2325,7 +2370,7 @@
       "WebhookCreateResponse": {
         "additionalProperties": false,
         "properties": {
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -2362,7 +2407,7 @@
           "events",
           "description",
           "status",
-          "created_at",
+          "createdAt",
           "secret"
         ],
         "type": "object"
@@ -2370,7 +2415,7 @@
       "WebhookResponse": {
         "additionalProperties": false,
         "properties": {
-          "created_at": {
+          "createdAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -2404,7 +2449,7 @@
           "events",
           "description",
           "status",
-          "created_at"
+          "createdAt"
         ],
         "type": "object"
       }
@@ -2438,7 +2483,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "description": "RFC 3339 timestamp of account creation.",
                           "format": "date-time",
                           "type": "string"
@@ -2455,13 +2500,19 @@
                           "description": "IANA timezone (e.g. \"America/New_York\"), or null if unset.",
                           "nullable": true,
                           "type": "string"
+                        },
+                        "userEmail": {
+                          "description": "Email address of the user the API key belongs to, or null if unavailable.",
+                          "nullable": true,
+                          "type": "string"
                         }
                       },
                       "required": [
                         "id",
                         "name",
+                        "userEmail",
                         "timezone",
-                        "created_at"
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -2597,11 +2648,11 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "contact_count": {
+                          "contactCount": {
                             "minimum": 0,
                             "type": "integer"
                           },
-                          "created_at": {
+                          "createdAt": {
                             "format": "date-time",
                             "type": "string"
                           },
@@ -2615,8 +2666,8 @@
                         "required": [
                           "id",
                           "name",
-                          "contact_count",
-                          "created_at"
+                          "contactCount",
+                          "createdAt"
                         ],
                         "type": "object"
                       },
@@ -2729,7 +2780,7 @@
         ]
       },
       "post": {
-        "description": "Create a new audience. Returns the audience with `contact_count: 0`. Requires `audiences:write`.",
+        "description": "Create a new audience. Returns the audience with `contactCount: 0`. Requires `audiences:write`.",
         "operationId": "audiences.create",
         "requestBody": {
           "content": {
@@ -2817,11 +2868,11 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "contact_count": {
+                        "contactCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -2835,8 +2886,8 @@
                       "required": [
                         "id",
                         "name",
-                        "contact_count",
-                        "created_at"
+                        "contactCount",
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -3074,7 +3125,7 @@
         ]
       },
       "get": {
-        "description": "Retrieve a single audience by id, including its `contact_count` and variable schema. Requires `audiences:read`.",
+        "description": "Retrieve a single audience by id, including its `contactCount` and variable schema. Requires `audiences:read`.",
         "operationId": "audiences.get",
         "parameters": [
           {
@@ -3096,11 +3147,11 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "contact_count": {
+                        "contactCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -3114,8 +3165,8 @@
                       "required": [
                         "id",
                         "name",
-                        "contact_count",
-                        "created_at"
+                        "contactCount",
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -3264,11 +3315,11 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "contact_count": {
+                        "contactCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -3282,8 +3333,8 @@
                       "required": [
                         "id",
                         "name",
-                        "contact_count",
-                        "created_at"
+                        "contactCount",
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -3459,14 +3510,14 @@
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "contact_count": {
+                        "contactCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
                       },
                       "required": [
                         "added",
-                        "contact_count"
+                        "contactCount"
                       ],
                       "type": "object"
                     },
@@ -3769,7 +3820,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "added_at": {
+                        "addedAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -3790,7 +3841,7 @@
                         "id",
                         "to",
                         "variables",
-                        "added_at"
+                        "addedAt"
                       ],
                       "type": "object"
                     },
@@ -3898,7 +3949,7 @@
     },
     "/v1/campaigns": {
       "get": {
-        "description": "List the campaigns in your workspace, newest first, each with its live counters (`sent_count`, `delivered_count`, `read_count`, `failed_count`). Offset-paginated via `limit` + `skip`. Requires `campaigns:read`.",
+        "description": "List the campaigns in your workspace, newest first, each with its live counters (`sentCount`, `deliveredCount`, `readCount`, `failedCount`). Offset-paginated via `limit` + `skip`. Requires `campaigns:read`.",
         "operationId": "campaigns.list",
         "parameters": [
           {
@@ -3936,28 +3987,28 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "aborted_at": {
+                          "abortedAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
                           },
-                          "audience_id": {
+                          "audienceId": {
                             "type": "string"
                           },
-                          "completed_at": {
+                          "completedAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
                           },
-                          "created_at": {
+                          "createdAt": {
                             "format": "date-time",
                             "type": "string"
                           },
-                          "delivered_count": {
+                          "deliveredCount": {
                             "minimum": 0,
                             "type": "integer"
                           },
-                          "failed_count": {
+                          "failedCount": {
                             "minimum": 0,
                             "type": "integer"
                           },
@@ -3971,15 +4022,15 @@
                           "name": {
                             "type": "string"
                           },
-                          "read_count": {
+                          "readCount": {
                             "minimum": 0,
                             "type": "integer"
                           },
-                          "sent_count": {
+                          "sentCount": {
                             "minimum": 0,
                             "type": "integer"
                           },
-                          "started_at": {
+                          "startedAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
@@ -3995,7 +4046,7 @@
                             ],
                             "type": "string"
                           },
-                          "total_count": {
+                          "totalCount": {
                             "minimum": 0,
                             "type": "integer"
                           }
@@ -4003,18 +4054,18 @@
                         "required": [
                           "id",
                           "name",
-                          "audience_id",
+                          "audienceId",
                           "status",
-                          "total_count",
-                          "sent_count",
-                          "delivered_count",
-                          "read_count",
-                          "failed_count",
+                          "totalCount",
+                          "sentCount",
+                          "deliveredCount",
+                          "readCount",
+                          "failedCount",
                           "from",
-                          "created_at",
-                          "started_at",
-                          "completed_at",
-                          "aborted_at"
+                          "createdAt",
+                          "startedAt",
+                          "completedAt",
+                          "abortedAt"
                         ],
                         "type": "object"
                       },
@@ -4135,7 +4186,7 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "audience_id": {
+                  "audienceId": {
                     "description": "ID of the audience to target. Each audience contact contributes one outgoing message.",
                     "minLength": 1,
                     "type": "string"
@@ -4145,13 +4196,13 @@
                     "pattern": "^\\+[1-9]\\d{6,14}$",
                     "type": "string"
                   },
-                  "media_caption": {
-                    "description": "Caption for the media attachment. Requires media_url.",
+                  "mediaCaption": {
+                    "description": "Caption for the media attachment. Requires mediaUrl.",
                     "maxLength": 1024,
                     "minLength": 1,
                     "type": "string"
                   },
-                  "media_url": {
+                  "mediaUrl": {
                     "description": "Public https URL of an image/video/document to attach.",
                     "format": "uri",
                     "maxLength": 2048,
@@ -4163,7 +4214,7 @@
                     "minLength": 1,
                     "type": "string"
                   },
-                  "on_missing_variable": {
+                  "onMissingVariable": {
                     "description": "Behavior when a template references a variable that is not present on a contact:\n  - `fail` (default): reject the request at create time; no messages are sent. Returns 400 with `data.examples` listing offending contacts.\n  - `skip`: accept the campaign; contacts missing variables receive the message with literal `{token}` left in place.",
                     "enum": [
                       "fail",
@@ -4180,7 +4231,7 @@
                 },
                 "required": [
                   "name",
-                  "audience_id"
+                  "audienceId"
                 ],
                 "type": "object"
               }
@@ -4198,28 +4249,28 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "aborted_at": {
+                        "abortedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "audience_id": {
+                        "audienceId": {
                           "type": "string"
                         },
-                        "completed_at": {
+                        "completedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
-                        "delivered_count": {
+                        "deliveredCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "failed_count": {
+                        "failedCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
@@ -4233,15 +4284,15 @@
                         "name": {
                           "type": "string"
                         },
-                        "read_count": {
+                        "readCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "sent_count": {
+                        "sentCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "started_at": {
+                        "startedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -4257,7 +4308,7 @@
                           ],
                           "type": "string"
                         },
-                        "total_count": {
+                        "totalCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -4265,18 +4316,18 @@
                       "required": [
                         "id",
                         "name",
-                        "audience_id",
+                        "audienceId",
                         "status",
-                        "total_count",
-                        "sent_count",
-                        "delivered_count",
-                        "read_count",
-                        "failed_count",
+                        "totalCount",
+                        "sentCount",
+                        "deliveredCount",
+                        "readCount",
+                        "failedCount",
                         "from",
-                        "created_at",
-                        "started_at",
-                        "completed_at",
-                        "aborted_at"
+                        "createdAt",
+                        "startedAt",
+                        "completedAt",
+                        "abortedAt"
                       ],
                       "type": "object"
                     },
@@ -4396,28 +4447,28 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "aborted_at": {
+                        "abortedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "audience_id": {
+                        "audienceId": {
                           "type": "string"
                         },
-                        "completed_at": {
+                        "completedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
-                        "delivered_count": {
+                        "deliveredCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "failed_count": {
+                        "failedCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
@@ -4431,15 +4482,15 @@
                         "name": {
                           "type": "string"
                         },
-                        "read_count": {
+                        "readCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "sent_count": {
+                        "sentCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "started_at": {
+                        "startedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -4455,7 +4506,7 @@
                           ],
                           "type": "string"
                         },
-                        "total_count": {
+                        "totalCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -4463,18 +4514,18 @@
                       "required": [
                         "id",
                         "name",
-                        "audience_id",
+                        "audienceId",
                         "status",
-                        "total_count",
-                        "sent_count",
-                        "delivered_count",
-                        "read_count",
-                        "failed_count",
+                        "totalCount",
+                        "sentCount",
+                        "deliveredCount",
+                        "readCount",
+                        "failedCount",
                         "from",
-                        "created_at",
-                        "started_at",
-                        "completed_at",
-                        "aborted_at"
+                        "createdAt",
+                        "startedAt",
+                        "completedAt",
+                        "abortedAt"
                       ],
                       "type": "object"
                     },
@@ -4604,28 +4655,28 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "aborted_at": {
+                        "abortedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "audience_id": {
+                        "audienceId": {
                           "type": "string"
                         },
-                        "completed_at": {
+                        "completedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
-                        "delivered_count": {
+                        "deliveredCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "failed_count": {
+                        "failedCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
@@ -4639,15 +4690,15 @@
                         "name": {
                           "type": "string"
                         },
-                        "read_count": {
+                        "readCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "sent_count": {
+                        "sentCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "started_at": {
+                        "startedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -4663,7 +4714,7 @@
                           ],
                           "type": "string"
                         },
-                        "total_count": {
+                        "totalCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -4671,18 +4722,18 @@
                       "required": [
                         "id",
                         "name",
-                        "audience_id",
+                        "audienceId",
                         "status",
-                        "total_count",
-                        "sent_count",
-                        "delivered_count",
-                        "read_count",
-                        "failed_count",
+                        "totalCount",
+                        "sentCount",
+                        "deliveredCount",
+                        "readCount",
+                        "failedCount",
                         "from",
-                        "created_at",
-                        "started_at",
-                        "completed_at",
-                        "aborted_at"
+                        "createdAt",
+                        "startedAt",
+                        "completedAt",
+                        "abortedAt"
                       ],
                       "type": "object"
                     },
@@ -4812,28 +4863,28 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "aborted_at": {
+                        "abortedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "audience_id": {
+                        "audienceId": {
                           "type": "string"
                         },
-                        "completed_at": {
+                        "completedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
-                        "delivered_count": {
+                        "deliveredCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "failed_count": {
+                        "failedCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
@@ -4847,15 +4898,15 @@
                         "name": {
                           "type": "string"
                         },
-                        "read_count": {
+                        "readCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "sent_count": {
+                        "sentCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "started_at": {
+                        "startedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -4871,7 +4922,7 @@
                           ],
                           "type": "string"
                         },
-                        "total_count": {
+                        "totalCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -4879,18 +4930,18 @@
                       "required": [
                         "id",
                         "name",
-                        "audience_id",
+                        "audienceId",
                         "status",
-                        "total_count",
-                        "sent_count",
-                        "delivered_count",
-                        "read_count",
-                        "failed_count",
+                        "totalCount",
+                        "sentCount",
+                        "deliveredCount",
+                        "readCount",
+                        "failedCount",
                         "from",
-                        "created_at",
-                        "started_at",
-                        "completed_at",
-                        "aborted_at"
+                        "createdAt",
+                        "startedAt",
+                        "completedAt",
+                        "abortedAt"
                       ],
                       "type": "object"
                     },
@@ -5020,28 +5071,28 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "aborted_at": {
+                        "abortedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "audience_id": {
+                        "audienceId": {
                           "type": "string"
                         },
-                        "completed_at": {
+                        "completedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
-                        "delivered_count": {
+                        "deliveredCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "failed_count": {
+                        "failedCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
@@ -5055,15 +5106,15 @@
                         "name": {
                           "type": "string"
                         },
-                        "read_count": {
+                        "readCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "sent_count": {
+                        "sentCount": {
                           "minimum": 0,
                           "type": "integer"
                         },
-                        "started_at": {
+                        "startedAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -5079,7 +5130,7 @@
                           ],
                           "type": "string"
                         },
-                        "total_count": {
+                        "totalCount": {
                           "minimum": 0,
                           "type": "integer"
                         }
@@ -5087,18 +5138,18 @@
                       "required": [
                         "id",
                         "name",
-                        "audience_id",
+                        "audienceId",
                         "status",
-                        "total_count",
-                        "sent_count",
-                        "delivered_count",
-                        "read_count",
-                        "failed_count",
+                        "totalCount",
+                        "sentCount",
+                        "deliveredCount",
+                        "readCount",
+                        "failedCount",
                         "from",
-                        "created_at",
-                        "started_at",
-                        "completed_at",
-                        "aborted_at"
+                        "createdAt",
+                        "startedAt",
+                        "completedAt",
+                        "abortedAt"
                       ],
                       "type": "object"
                     },
@@ -5236,7 +5287,7 @@
           {
             "description": "Include the last message snippet on each chat row.",
             "in": "query",
-            "name": "include_last_message",
+            "name": "includeLastMessage",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -5245,7 +5296,7 @@
           {
             "description": "Include extended chat metadata (engine-side opt-in).",
             "in": "query",
-            "name": "include_extended_info",
+            "name": "includeExtendedInfo",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -5254,7 +5305,7 @@
           {
             "description": "Include chats with no resolved name (default: skipped).",
             "in": "query",
-            "name": "include_without_name",
+            "name": "includeWithoutName",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -5298,25 +5349,25 @@
                           "id": {
                             "type": "string"
                           },
-                          "is_group": {
+                          "isGroup": {
                             "type": "boolean"
                           },
-                          "is_newsletter": {
+                          "isNewsletter": {
                             "type": "boolean"
                           },
-                          "last_message_at": {
+                          "lastMessageAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
                           },
-                          "marked_unread": {
+                          "markedUnread": {
                             "type": "boolean"
                           },
                           "name": {
                             "nullable": true,
                             "type": "string"
                           },
-                          "unread_count": {
+                          "unreadCount": {
                             "minimum": 0,
                             "nullable": true,
                             "type": "integer"
@@ -5325,11 +5376,11 @@
                         "required": [
                           "id",
                           "name",
-                          "is_group",
-                          "is_newsletter",
-                          "last_message_at",
-                          "unread_count",
-                          "marked_unread"
+                          "isGroup",
+                          "isNewsletter",
+                          "lastMessageAt",
+                          "unreadCount",
+                          "markedUnread"
                         ],
                         "type": "object"
                       },
@@ -5442,14 +5493,14 @@
         ]
       }
     },
-    "/v1/chats/{chat_id}/mark_read": {
+    "/v1/chats/{chatId}/mark_read": {
       "post": {
         "description": "Clears the unread badge on the connected engine for the given chat. Requires `chats:write`.",
         "operationId": "chats.markread.create",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -5580,14 +5631,14 @@
         ]
       }
     },
-    "/v1/chats/{chat_id}/open": {
+    "/v1/chats/{chatId}/open": {
       "post": {
         "description": "Brings the chat to the foreground on the connected WhatsApp Web client (creates the chat if it doesn`t exist yet for the engine). Useful before issuing follow-up reads on a fresh JID. Requires `chats:write`.",
         "operationId": "chats.open.create",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -5604,12 +5655,12 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "chat_id": {
+                        "chatId": {
                           "type": "string"
                         }
                       },
                       "required": [
-                        "chat_id"
+                        "chatId"
                       ],
                       "type": "object"
                     },
@@ -5715,14 +5766,14 @@
         ]
       }
     },
-    "/v1/chats/{chat_id}/participants": {
+    "/v1/chats/{chatId}/participants": {
       "get": {
         "description": "For group chats, returns the participant list (paginated). For DMs, returns the single counterparty. Requires `chats:read`.",
         "operationId": "chats.participants.list",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -5773,19 +5824,19 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "chat_id": {
+                          "chatId": {
                             "type": "string"
                           },
-                          "is_admin": {
+                          "isAdmin": {
                             "type": "boolean"
                           },
-                          "is_super_admin": {
+                          "isSuperAdmin": {
                             "type": "boolean"
                           }
                         },
                         "required": [
-                          "chat_id",
-                          "is_admin"
+                          "chatId",
+                          "isAdmin"
                         ],
                         "type": "object"
                       },
@@ -5935,25 +5986,25 @@
                         "id": {
                           "type": "string"
                         },
-                        "is_group": {
+                        "isGroup": {
                           "type": "boolean"
                         },
-                        "is_newsletter": {
+                        "isNewsletter": {
                           "type": "boolean"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
-                        "marked_unread": {
+                        "markedUnread": {
                           "type": "boolean"
                         },
                         "name": {
                           "nullable": true,
                           "type": "string"
                         },
-                        "unread_count": {
+                        "unreadCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -5962,11 +6013,11 @@
                       "required": [
                         "id",
                         "name",
-                        "is_group",
-                        "is_newsletter",
-                        "last_message_at",
-                        "unread_count",
-                        "marked_unread"
+                        "isGroup",
+                        "isNewsletter",
+                        "lastMessageAt",
+                        "unreadCount",
+                        "markedUnread"
                       ],
                       "type": "object"
                     },
@@ -6117,10 +6168,10 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "chat_id": {
+                          "chatId": {
                             "type": "string"
                           },
-                          "is_business": {
+                          "isBusiness": {
                             "type": "boolean"
                           },
                           "name": {
@@ -6129,7 +6180,7 @@
                           }
                         },
                         "required": [
-                          "chat_id"
+                          "chatId"
                         ],
                         "type": "object"
                       },
@@ -6244,7 +6295,7 @@
     },
     "/v1/engines": {
       "get": {
-        "description": "List engines connected to this workspace. Returns an array (currently up to one entry, but the response shape leaves room for multi-engine workspaces). When no engine is connected, `data` is empty and `message` explains why — this is not an error.",
+        "description": "List the WhatsApp engines connected to this workspace — one entry per online engine (a workspace with two paired WhatsApp Web tabs returns two entries). Each entry carries its own `id` (the engine session's MQTT presence client id, same id space as ping's `whatsapp_connections[].id`), its `type` (`gateway` or `regular`), and its connectivity status. When no engine is connected, `data` is empty and `message` explains why — this is not an error.",
         "operationId": "engines.list",
         "responses": {
           "200": {
@@ -6265,10 +6316,14 @@
                                 "description": "Whether this engine is currently online and serving requests.",
                                 "type": "boolean"
                               },
-                              "has_synced": {
+                              "hasSynced": {
                                 "description": "Whether the engine has completed its initial history sync.",
                                 "nullable": true,
                                 "type": "boolean"
+                              },
+                              "id": {
+                                "description": "Stable id of this engine session (its MQTT presence client id). Same id space as ping's whatsapp_connections[].id.",
+                                "type": "string"
                               },
                               "state": {
                                 "description": "Engine-side connection state (e.g. CONNECTED, OPENING, PAIRING). Null when unknown.",
@@ -6279,13 +6334,23 @@
                                 "description": "Underlying WA stream state. Null when unknown.",
                                 "nullable": true,
                                 "type": "string"
+                              },
+                              "type": {
+                                "description": "Engine kind. \"gateway\" = a remote, server-side engine (Blueticks 24/7 gateway / baileys pod). \"regular\" = the user's own WhatsApp Web browser extension.",
+                                "enum": [
+                                  "gateway",
+                                  "regular"
+                                ],
+                                "type": "string"
                               }
                             },
                             "required": [
+                              "id",
+                              "type",
                               "connected",
                               "state",
                               "stream",
-                              "has_synced"
+                              "hasSynced"
                             ],
                             "type": "object"
                           },
@@ -6448,7 +6513,7 @@
                             "nullable": true,
                             "type": "boolean"
                           },
-                          "created_at": {
+                          "createdAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
@@ -6460,7 +6525,7 @@
                           "id": {
                             "type": "string"
                           },
-                          "last_message_at": {
+                          "lastMessageAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
@@ -6473,7 +6538,7 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "participant_count": {
+                          "participantCount": {
                             "minimum": 0,
                             "nullable": true,
                             "type": "integer"
@@ -6482,13 +6547,13 @@
                             "items": {
                               "additionalProperties": false,
                               "properties": {
-                                "chat_id": {
+                                "chatId": {
                                   "type": "string"
                                 },
-                                "is_admin": {
+                                "isAdmin": {
                                   "type": "boolean"
                                 },
-                                "is_super_admin": {
+                                "isSuperAdmin": {
                                   "type": "boolean"
                                 },
                                 "name": {
@@ -6497,9 +6562,9 @@
                                 }
                               },
                               "required": [
-                                "chat_id",
-                                "is_admin",
-                                "is_super_admin",
+                                "chatId",
+                                "isAdmin",
+                                "isSuperAdmin",
                                 "name"
                               ],
                               "type": "object"
@@ -6517,9 +6582,9 @@
                           "name",
                           "description",
                           "owner",
-                          "created_at",
-                          "last_message_at",
-                          "participant_count",
+                          "createdAt",
+                          "lastMessageAt",
+                          "participantCount",
                           "announce",
                           "restrict",
                           "participants"
@@ -6693,7 +6758,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -6705,7 +6770,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -6718,7 +6783,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -6727,13 +6792,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -6742,9 +6807,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -6762,9 +6827,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -6891,7 +6956,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -6903,7 +6968,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -6916,7 +6981,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -6925,13 +6990,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -6940,9 +7005,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -6960,9 +7025,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -7100,7 +7165,7 @@
                       "announce": {
                         "type": "boolean"
                       },
-                      "edit_info_admins_only": {
+                      "editInfoAdminsOnly": {
                         "type": "boolean"
                       },
                       "restrict": {
@@ -7130,7 +7195,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7142,7 +7207,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7155,7 +7220,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -7164,13 +7229,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -7179,9 +7244,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -7199,9 +7264,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -7312,7 +7377,7 @@
     },
     "/v1/groups/{id}/members": {
       "post": {
-        "description": "Add a participant to the group by chat_id (JID) or phone number in international format (e.g. +14155551234). Requires `groups:write`.",
+        "description": "Add a participant to the group by chatId (JID) or phone number in international format (e.g. +14155551234). Requires `groups:write`.",
         "operationId": "groups.members.create",
         "parameters": [
           {
@@ -7330,7 +7395,7 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "chat_id": {
+                  "chatId": {
                     "type": "string"
                   },
                   "participants": {
@@ -7362,7 +7427,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7374,7 +7439,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7387,7 +7452,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -7396,13 +7461,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -7411,9 +7476,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -7431,9 +7496,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -7680,7 +7745,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7692,7 +7757,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7705,7 +7770,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -7714,13 +7779,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -7729,9 +7794,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -7749,9 +7814,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -7896,7 +7961,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7908,7 +7973,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -7921,7 +7986,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -7930,13 +7995,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -7945,9 +8010,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -7965,9 +8030,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -8110,7 +8175,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -8122,7 +8187,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -8135,7 +8200,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -8144,13 +8209,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -8159,9 +8224,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -8179,9 +8244,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -8292,7 +8357,7 @@
     },
     "/v1/groups/{id}/picture": {
       "put": {
-        "description": "Replace the group picture. Provide the image as `file_data_url` (base64 data URL, PNG/JPEG, ≤20 MiB) or `url` (https). You can also upload a file as `multipart/form-data` with a `file` part. Requires `groups:write`.\n\n> In the Body panel, the **Attach a file** control has a content-type dropdown: `application/json` inlines the file as base64 in `file_data_url`, or `multipart/form-data` uploads the raw file — then press **Send**.",
+        "description": "Replace the group picture. Provide the image as `fileDataUrl` (base64 data URL, PNG/JPEG, ≤20 MiB) or `url` (https). You can also upload a file as `multipart/form-data` with a `file` part. Requires `groups:write`.\n\n> In the Body panel, the **Attach a file** control has a content-type dropdown: `application/json` inlines the file as base64 in `fileDataUrl`, or `multipart/form-data` uploads the raw file — then press **Send**.",
         "operationId": "groups.picture.update",
         "parameters": [
           {
@@ -8310,16 +8375,16 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "file_data_url": {
+                  "fileDataUrl": {
                     "maxLength": 20971520,
                     "minLength": 1,
                     "type": "string"
                   },
-                  "file_mime_type": {
+                  "fileMimeType": {
                     "maxLength": 127,
                     "type": "string"
                   },
-                  "file_name": {
+                  "fileName": {
                     "maxLength": 255,
                     "type": "string"
                   },
@@ -8349,7 +8414,7 @@
                           "nullable": true,
                           "type": "boolean"
                         },
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -8361,7 +8426,7 @@
                         "id": {
                           "type": "string"
                         },
-                        "last_message_at": {
+                        "lastMessageAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -8374,7 +8439,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "participant_count": {
+                        "participantCount": {
                           "minimum": 0,
                           "nullable": true,
                           "type": "integer"
@@ -8383,13 +8448,13 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
-                              "chat_id": {
+                              "chatId": {
                                 "type": "string"
                               },
-                              "is_admin": {
+                              "isAdmin": {
                                 "type": "boolean"
                               },
-                              "is_super_admin": {
+                              "isSuperAdmin": {
                                 "type": "boolean"
                               },
                               "name": {
@@ -8398,9 +8463,9 @@
                               }
                             },
                             "required": [
-                              "chat_id",
-                              "is_admin",
-                              "is_super_admin",
+                              "chatId",
+                              "isAdmin",
+                              "isSuperAdmin",
                               "name"
                             ],
                             "type": "object"
@@ -8418,9 +8483,9 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
-                        "last_message_at",
-                        "participant_count",
+                        "createdAt",
+                        "lastMessageAt",
+                        "participantCount",
                         "announce",
                         "restrict",
                         "participants"
@@ -8681,7 +8746,7 @@
                             "nullable": true,
                             "type": "string"
                           },
-                          "chat_id": {
+                          "chatId": {
                             "type": "string"
                           },
                           "filename": {
@@ -8691,17 +8756,17 @@
                           "from": {
                             "type": "string"
                           },
-                          "from_me": {
+                          "fromMe": {
                             "type": "boolean"
                           },
                           "key": {
                             "type": "string"
                           },
-                          "link_preview": {
+                          "linkPreview": {
                             "additionalProperties": false,
                             "nullable": true,
                             "properties": {
-                              "canonical_url": {
+                              "canonicalUrl": {
                                 "nullable": true,
                                 "type": "string"
                               },
@@ -8721,12 +8786,12 @@
                             "required": [
                               "title",
                               "description",
-                              "canonical_url",
+                              "canonicalUrl",
                               "thumbnail"
                             ],
                             "type": "object"
                           },
-                          "media_url": {
+                          "mediaUrl": {
                             "nullable": true,
                             "type": "string"
                           },
@@ -8745,14 +8810,14 @@
                         },
                         "required": [
                           "key",
-                          "chat_id",
+                          "chatId",
                           "from",
                           "timestamp",
                           "text",
                           "type",
-                          "from_me",
+                          "fromMe",
                           "ack",
-                          "media_url",
+                          "mediaUrl",
                           "caption",
                           "filename"
                         ],
@@ -8867,23 +8932,25 @@
         ]
       }
     },
-    "/v1/messages/ack/{chat_id}/{key}": {
+    "/v1/messages/ack/{waMessageKey}": {
       "get": {
         "description": "Returns the WhatsApp ack value for a sent message: -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played. Requires `chats:read`.",
         "operationId": "messages.ack.get",
         "parameters": [
           {
+            "description": "The complete WhatsApp message key (`<fromMe>_<chatJid>_<id>[_<participant>]`), e.g. `false_120363426216988013@g.us_3EB0659D13650092D677AD_188450464616609@lid`.",
             "in": "path",
-            "name": "chat_id",
+            "name": "waMessageKey",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "path",
-            "name": "key",
-            "required": true,
+            "description": "Optional. Only used to find the message faster — when you pass a bare message id instead of the complete key, `chatId` lets the server rebuild the full key. If you pass the complete `waMessageKey` you can omit it.",
+            "in": "query",
+            "name": "chatId",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -9022,11 +9089,11 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "chat_id": {
+                  "chatId": {
                     "minLength": 1,
                     "type": "string"
                   },
-                  "message_keys": {
+                  "messageKeys": {
                     "items": {
                       "minLength": 1,
                       "type": "string"
@@ -9037,7 +9104,7 @@
                   }
                 },
                 "required": [
-                  "message_keys"
+                  "messageKeys"
                 ],
                 "type": "object"
               }
@@ -9180,14 +9247,14 @@
         ]
       }
     },
-    "/v1/messages/load_older/{chat_id}": {
+    "/v1/messages/load_older/{chatId}": {
       "post": {
         "description": "Asks the engine to pull older history from the connected phone for chats that haven`t been fully synced yet. Use this once before paginating with `since` if you need messages older than what`s already cached. Requires `chats:read`.",
         "operationId": "messages.loadolder.create",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -9208,18 +9275,29 @@
                           "nullable": true,
                           "type": "integer"
                         },
-                        "can_load_more": {
+                        "canLoadMore": {
                           "type": "boolean"
                         },
-                        "total_messages": {
+                        "error": {
+                          "description": "Human-readable reason older messages could not be loaded from the phone; null when the pull succeeded or the chat is already fully synced.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "historyUnavailable": {
+                          "description": "True when no older messages could be pulled because the phone reported it has no retrievable history for this chat (or the phone is offline). When true, `added` is 0, `canLoadMore` is false, and `error` carries the reason. This is distinct from a chat that is simply already fully synced (historyUnavailable=false, added=0).",
+                          "type": "boolean"
+                        },
+                        "totalMessages": {
                           "nullable": true,
                           "type": "integer"
                         }
                       },
                       "required": [
-                        "total_messages",
+                        "totalMessages",
                         "added",
-                        "can_load_more"
+                        "canLoadMore",
+                        "historyUnavailable",
+                        "error"
                       ],
                       "type": "object"
                     },
@@ -9325,23 +9403,25 @@
         ]
       }
     },
-    "/v1/messages/media/{chat_id}/{key}": {
+    "/v1/messages/media/{waMessageKey}": {
       "get": {
-        "description": "Download the media attached to a WhatsApp message (image, video, document, audio).\nReturns either a hosted URL (`url`) or inline `data_base64`, plus mimetype + filename.\n\nCAVEAT: for own-sent newsletter media (messages you sent to a `@newsletter` chat), the bytes returned are a WA-generated preview JPEG (~7KB) rather than the original you uploaded — WA releases the original blob from memory immediately after the unencrypted upload. The response will include `original_quality:false` when this fallback is in effect; the caller can warn the user or decide to retry from a different source.\n\nRequires `chats:read`.",
+        "description": "Download the media attached to a WhatsApp message (image, video, document, audio).\nReturns either a hosted URL (`url`) or inline `dataBase64`, plus mimetype + filename.\n\nCAVEAT: for own-sent newsletter media (messages you sent to a `@newsletter` chat), the bytes returned are a WA-generated preview JPEG (~7KB) rather than the original you uploaded — WA releases the original blob from memory immediately after the unencrypted upload. The response will include `originalQuality:false` when this fallback is in effect; the caller can warn the user or decide to retry from a different source.\n\nRequires `chats:read`.",
         "operationId": "messages.media.get",
         "parameters": [
           {
+            "description": "The complete WhatsApp message key (`<fromMe>_<chatJid>_<id>[_<participant>]`), e.g. `false_120363426216988013@g.us_3EB0659D13650092D677AD_188450464616609@lid`.",
             "in": "path",
-            "name": "chat_id",
+            "name": "waMessageKey",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "path",
-            "name": "key",
-            "required": true,
+            "description": "Optional. Only used to find the message faster — when you pass a bare message id instead of the complete key, `chatId` lets the server rebuild the full key. If you pass the complete `waMessageKey` you can omit it.",
+            "in": "query",
+            "name": "chatId",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -9357,7 +9437,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "data_base64": {
+                        "dataBase64": {
                           "nullable": true,
                           "type": "string"
                         },
@@ -9365,7 +9445,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "media_unavailable": {
+                        "mediaUnavailable": {
                           "description": "Set when the bytes could not be downloaded or never existed. \"expired\" = WA aged the file out of CDN retention (typically older than ~30 days for documents) and there is nothing to retry. \"fetching\" = WA is mid-download from its CDN — transient, the server already retried for ~10s; calling again in a few seconds usually resolves to bytes. \"awaiting_sender\" = WA's CDN does not have the file but has asked the sender's device to reupload it. The reupload only completes when the sender's WhatsApp client is open and online; closed/backgrounded apps block it indefinitely. Tell the user to ask the sender to open WhatsApp; do not poll. \"error\" = unexpected failure; \"no_media\" = the message is text-only / revoked / location / vcard, i.e. it never carried media — caller should not have invoked this tool on this messageKey. Absent when bytes were not needed or when the fetch succeeded.",
                           "enum": [
                             "expired",
@@ -9381,7 +9461,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "original_quality": {
+                        "originalQuality": {
                           "description": "Set to false when the bytes returned are NOT the original sender uploaded — i.e. WA released the original from memory and we synthesized from a smaller WA-generated preview (#113). Currently only happens for own-sent newsletter media (messages you sent to a @newsletter chat). When absent or true, the bytes are the genuine original. Consumers can use this to warn users / decide whether to retry from a different source.",
                           "nullable": true,
                           "type": "boolean"
@@ -9395,9 +9475,9 @@
                         "url",
                         "mimetype",
                         "filename",
-                        "data_base64",
-                        "original_quality",
-                        "media_unavailable"
+                        "dataBase64",
+                        "originalQuality",
+                        "mediaUnavailable"
                       ],
                       "type": "object"
                     },
@@ -9503,23 +9583,25 @@
         ]
       }
     },
-    "/v1/messages/media_url/{chat_id}/{key}": {
+    "/v1/messages/media_url/{waMessageKey}": {
       "get": {
-        "description": "Returns a hosted URL for the message media without inlining bytes. Faster + cheaper than `media` when the caller can fetch the URL themselves. Same `media_unavailable` semantics. Requires `chats:read`.",
+        "description": "Returns a hosted URL for the message media without inlining bytes. Faster + cheaper than `media` when the caller can fetch the URL themselves. Same `mediaUnavailable` semantics. Requires `chats:read`.",
         "operationId": "messages.mediaurl.get",
         "parameters": [
           {
+            "description": "The complete WhatsApp message key (`<fromMe>_<chatJid>_<id>[_<participant>]`), e.g. `false_120363426216988013@g.us_3EB0659D13650092D677AD_188450464616609@lid`.",
             "in": "path",
-            "name": "chat_id",
+            "name": "waMessageKey",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "path",
-            "name": "key",
-            "required": true,
+            "description": "Optional. Only used to find the message faster — when you pass a bare message id instead of the complete key, `chatId` lets the server rebuild the full key. If you pass the complete `waMessageKey` you can omit it.",
+            "in": "query",
+            "name": "chatId",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -9648,14 +9730,14 @@
         ]
       }
     },
-    "/v1/messages/pinned/{chat_id}": {
+    "/v1/messages/pinned/{chatId}": {
       "get": {
         "description": "List the currently pinned messages in a chat. Requires `chats:read`.",
         "operationId": "messages.pinned.get",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -9673,7 +9755,7 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "chat_id": {
+                          "chatId": {
                             "type": "string"
                           },
                           "key": {
@@ -9686,7 +9768,7 @@
                         },
                         "required": [
                           "key",
-                          "chat_id",
+                          "chatId",
                           "text"
                         ],
                         "type": "object"
@@ -9810,23 +9892,25 @@
         ]
       }
     },
-    "/v1/messages/reactions/{chat_id}/{key}": {
+    "/v1/messages/reactions/{waMessageKey}": {
       "post": {
         "description": "Add or replace your reaction to a message. Pass an empty `emoji` string to remove. Requires `chats:write`.",
         "operationId": "messages.reactions.create",
         "parameters": [
           {
+            "description": "The complete WhatsApp message key (`<fromMe>_<chatJid>_<id>[_<participant>]`), e.g. `false_120363426216988013@g.us_3EB0659D13650092D677AD_188450464616609@lid`.",
             "in": "path",
-            "name": "chat_id",
+            "name": "waMessageKey",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "path",
-            "name": "key",
-            "required": true,
+            "description": "Optional. Only used to find the message faster — when you pass a bare message id instead of the complete key, `chatId` lets the server rebuild the full key. If you pass the complete `waMessageKey` you can omit it.",
+            "in": "query",
+            "name": "chatId",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -9977,14 +10061,14 @@
         ]
       }
     },
-    "/v1/messages/{chat_id}": {
+    "/v1/messages/{chatId}": {
       "post": {
         "description": "Send a message immediately to a specific chat. The body is the same FLAT shape as `POST /v1/scheduled-messages` minus `to` (derived from the URL path) and `sendAt` (this endpoint is fire-and-forget). Set `type` to `text`, `media`, or `poll`. The dispatch is direct — no DB row is created; the response carries the WhatsApp wire key under `key`. For scheduled or queue-managed sends use `POST /v1/scheduled-messages` instead. Requires `messages:write`.\n\n### Sending media (`type: \"media\"`)\n\nProvide the media **one** of these ways:\n\n- **`mediaUrl`** — a public `https://` URL to the file.\n- **`mediaBase64`** — the file bytes base64-encoded (or a `data:` URL), inline in the JSON body.\n- **Upload a file** — send the request as `multipart/form-data` with the file in a **`mediaFile`** part. See the cURL example below.\n\nIf both `mediaUrl` and `mediaBase64` are present, `mediaUrl` wins. Optional: `mediaFilename` (display name) and `mediaKind` (`image` · `video` · `audio` · `document` · `sticker` · `voice` · `gif`; auto-detected otherwise).\n\n> In the Body panel, the **Attach a file** control has a content-type dropdown next to it. Pick `application/json` to inline a small file as base64 in `mediaBase64`, or `multipart/form-data` to upload the raw file (no 10 MB JSON-body limit) — then just press **Send**. The cURL below is the multipart equivalent.\n\n```bash\ncurl -X POST \"https://api.blueticks.co/v1/messages/120363000000000000@g.us\" \\\n  -H \"Authorization: Bearer $BLUETICKS_API_KEY\" \\\n  -F \"type=media\" \\\n  -F \"text=Here is the file\" \\\n  -F \"mediaFile=@/path/to/photo.png\"\n```\n\n### Mentioning contacts\n\nMentions are written **inline in `text`** — there is no separate field. Use `@[Display Name](<jid>)`:\n\n```\nHi @[Joni Naor](972544325389@c.us) this is a test\n```",
         "operationId": "messages.create",
         "parameters": [
           {
             "in": "path",
-            "name": "chat_id",
+            "name": "chatId",
             "required": true,
             "schema": {
               "type": "string"
@@ -10336,23 +10420,25 @@
         ]
       }
     },
-    "/v1/messages/{chat_id}/{key}": {
+    "/v1/messages/{waMessageKey}": {
       "get": {
-        "description": "Fetch a single message by its WhatsApp message key. Requires `chats:read`.",
+        "description": "Fetch a single message by its complete WhatsApp message key. Requires `chats:read`.",
         "operationId": "messages.get",
         "parameters": [
           {
+            "description": "The complete WhatsApp message key (`<fromMe>_<chatJid>_<id>[_<participant>]`), e.g. `false_120363426216988013@g.us_3EB0659D13650092D677AD_188450464616609@lid`.",
             "in": "path",
-            "name": "chat_id",
+            "name": "waMessageKey",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "path",
-            "name": "key",
-            "required": true,
+            "description": "Optional. Only used to find the message faster — when you pass a bare message id instead of the complete key, `chatId` lets the server rebuild the full key. If you pass the complete `waMessageKey` you can omit it.",
+            "in": "query",
+            "name": "chatId",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -10380,7 +10466,7 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "chat_id": {
+                        "chatId": {
                           "type": "string"
                         },
                         "filename": {
@@ -10390,17 +10476,17 @@
                         "from": {
                           "type": "string"
                         },
-                        "from_me": {
+                        "fromMe": {
                           "type": "boolean"
                         },
                         "key": {
                           "type": "string"
                         },
-                        "link_preview": {
+                        "linkPreview": {
                           "additionalProperties": false,
                           "nullable": true,
                           "properties": {
-                            "canonical_url": {
+                            "canonicalUrl": {
                               "nullable": true,
                               "type": "string"
                             },
@@ -10420,12 +10506,12 @@
                           "required": [
                             "title",
                             "description",
-                            "canonical_url",
+                            "canonicalUrl",
                             "thumbnail"
                           ],
                           "type": "object"
                         },
-                        "media_url": {
+                        "mediaUrl": {
                           "nullable": true,
                           "type": "string"
                         },
@@ -10444,14 +10530,14 @@
                       },
                       "required": [
                         "key",
-                        "chat_id",
+                        "chatId",
                         "from",
                         "timestamp",
                         "text",
                         "type",
-                        "from_me",
+                        "fromMe",
                         "ack",
-                        "media_url",
+                        "mediaUrl",
                         "caption",
                         "filename"
                       ],
@@ -10609,7 +10695,7 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "created_at": {
+                          "createdAt": {
                             "format": "date-time",
                             "nullable": true,
                             "type": "string"
@@ -10656,7 +10742,7 @@
                           "name",
                           "description",
                           "owner",
-                          "created_at",
+                          "createdAt",
                           "subscribers",
                           "invite",
                           "verification"
@@ -10809,7 +10895,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -10856,7 +10942,7 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
+                        "createdAt",
                         "subscribers",
                         "invite",
                         "verification"
@@ -10981,7 +11067,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -11028,7 +11114,7 @@
                         "name",
                         "description",
                         "owner",
-                        "created_at",
+                        "createdAt",
                         "subscribers",
                         "invite",
                         "verification"
@@ -11139,7 +11225,7 @@
     },
     "/v1/ping": {
       "get": {
-        "description": "Health and connectivity probe. Confirms the Blueticks API server is live (`api: \"ok\"`) and lists the WhatsApp engines currently connected to this account in `whatsapp_connections`. Each connection is labelled `gateway` (a remote, server-side engine — the Blueticks 24/7 gateway / baileys pod) or `regular` (the user's own WhatsApp Web browser extension). An empty `whatsapp_connections` array means no WhatsApp is connected — this is not an error, and `message` explains it. Requires a valid API key; no scope required.",
+        "description": "Health and connectivity probe. Confirms the Blueticks API server is live (`api: \"ok\"`) and lists the WhatsApp engines currently connected to this account in `whatsappConnections`. Each connection is labelled `gateway` (a remote, server-side engine — the Blueticks 24/7 gateway / baileys pod) or `regular` (the user's own WhatsApp Web browser extension). An empty `whatsappConnections` array means no WhatsApp is connected — this is not an error, and `message` explains it. Requires a valid API key; no scope required.",
         "operationId": "ping.list",
         "responses": {
           "200": {
@@ -11151,7 +11237,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "account_id": {
+                        "accountId": {
                           "description": "The account (workspace) the API key belongs to.",
                           "type": "string"
                         },
@@ -11163,10 +11249,10 @@
                           "type": "string"
                         },
                         "message": {
-                          "description": "Present only when whatsapp_connections is empty; explains the empty state.",
+                          "description": "Present only when whatsappConnections is empty; explains the empty state.",
                           "type": "string"
                         },
-                        "whatsapp_connections": {
+                        "whatsappConnections": {
                           "description": "WhatsApp engines currently connected for this account. Empty means no WhatsApp is connected.",
                           "items": {
                             "additionalProperties": false,
@@ -11203,8 +11289,8 @@
                       },
                       "required": [
                         "api",
-                        "account_id",
-                        "whatsapp_connections"
+                        "accountId",
+                        "whatsappConnections"
                       ],
                       "type": "object"
                     },
@@ -12412,7 +12498,7 @@
         ]
       },
       "patch": {
-        "description": "Edit a previously-queued message that has not dispatched yet. Accepts a subset of `text`, `mediaUrl`, `mediaCaption`, `sendAt` — at least one is required. Returns 400 once the message has advanced past the editable window (status not in `pending`/`sending`).",
+        "description": "Edit a previously-queued message that has not dispatched yet. Accepts a subset of `text`, `mediaUrl`, `mediaCaption`, `sendAt` — at least one is required. Returns 400 once the message has advanced past the editable window (status not `pending`).",
         "operationId": "scheduled-messages.update",
         "parameters": [
           {
@@ -12756,7 +12842,7 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
-                          "created_at": {
+                          "createdAt": {
                             "format": "date-time",
                             "type": "string"
                           },
@@ -12790,7 +12876,7 @@
                           "events",
                           "description",
                           "status",
-                          "created_at"
+                          "createdAt"
                         ],
                         "type": "object"
                       },
@@ -13002,7 +13088,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -13039,7 +13125,7 @@
                         "events",
                         "description",
                         "status",
-                        "created_at",
+                        "createdAt",
                         "secret"
                       ],
                       "type": "object"
@@ -13300,7 +13386,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -13334,7 +13420,7 @@
                         "events",
                         "description",
                         "status",
-                        "created_at"
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -13528,7 +13614,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -13562,7 +13648,7 @@
                         "events",
                         "description",
                         "status",
-                        "created_at"
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -13692,7 +13778,7 @@
                     "data": {
                       "additionalProperties": false,
                       "properties": {
-                        "created_at": {
+                        "createdAt": {
                           "format": "date-time",
                           "type": "string"
                         },
@@ -13729,7 +13815,7 @@
                         "events",
                         "description",
                         "status",
-                        "created_at",
+                        "createdAt",
                         "secret"
                       ],
                       "type": "object"
