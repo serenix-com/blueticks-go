@@ -271,6 +271,56 @@ func (r *ChatsResource) React(ctx context.Context, waMessageKey, chatID, emoji s
 	return out, nil
 }
 
+// Pin pins a message to the top of its chat by its complete WhatsApp message key.
+// duration is the pin expiry in seconds; pass 0 to use WhatsApp's default of 7 days.
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) Pin(ctx context.Context, waMessageKey, chatID string, duration int) (*OkResponse, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
+	var reqBody interface{}
+	if duration > 0 {
+		reqBody = map[string]int{"duration": duration}
+	}
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/messages/pin/" + url.PathEscape(waMessageKey),
+		query:  q,
+		body:   reqBody,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Unpin removes an existing pin from a message by its complete WhatsApp message key.
+// Pass an empty chatID to omit the optional chatId query param.
+func (r *ChatsResource) Unpin(ctx context.Context, waMessageKey, chatID string) (*OkResponse, error) {
+	q := url.Values{}
+	if chatID != "" {
+		q.Set("chatId", chatID)
+	}
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/messages/unpin/" + url.PathEscape(waMessageKey),
+		query:  q,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LoadOlderMessages asks the engine to pull older history from the connected
 // phone for chats that haven't been fully synced yet. Use this once before
 // paginating with `since` if you need messages older than what's already
