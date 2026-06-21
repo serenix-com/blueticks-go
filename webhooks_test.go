@@ -10,7 +10,7 @@ func TestWebhooksFlow(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/webhooks":
-			jsonResponse(w, `{"id":"wh_1","url":"https://x","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z","secret":"whsec_abc"}`)
+			jsonResponse(w, `{"id":"wh_1","url":"https://x","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/webhooks":
 			jsonResponse(w, `{"data":[{"id":"wh_1","url":"https://x","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z"}],"has_more":false}`)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/webhooks/wh_1":
@@ -19,8 +19,6 @@ func TestWebhooksFlow(t *testing.T) {
 			jsonResponse(w, `{"id":"wh_1","url":"https://y","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/webhooks/wh_1":
 			jsonResponse(w, `{"id":"wh_1","deleted":true}`)
-		case r.Method == http.MethodPost && r.URL.Path == "/v1/webhooks/wh_1/rotate-secret":
-			jsonResponse(w, `{"id":"wh_1","url":"https://x","events":["message.delivered"],"status":"active","created_at":"2026-01-01T00:00:00Z","secret":"whsec_new"}`)
 		default:
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
@@ -30,8 +28,8 @@ func TestWebhooksFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if wh.Secret != "whsec_abc" {
-		t.Fatalf("expected secret, got %q", wh.Secret)
+	if wh.ID != "wh_1" {
+		t.Fatalf("expected webhook id wh_1, got %q", wh.ID)
 	}
 	if _, err := c.Webhooks.List(ctx, ListWebhooksParams{}); err != nil {
 		t.Fatalf("List: %v", err)
@@ -46,13 +44,6 @@ func TestWebhooksFlow(t *testing.T) {
 		t.Fatalf("Delete: %v", err)
 	} else if del == nil || del.ID != "wh_1" || !del.Deleted {
 		t.Fatalf("Delete: unexpected envelope %+v", del)
-	}
-	rot, err := c.Webhooks.RotateSecret(ctx, "wh_1")
-	if err != nil {
-		t.Fatalf("RotateSecret: %v", err)
-	}
-	if rot.Secret != "whsec_new" {
-		t.Fatalf("expected new secret, got %q", rot.Secret)
 	}
 }
 

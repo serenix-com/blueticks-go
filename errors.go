@@ -18,7 +18,6 @@ var (
 	ErrAPI                 = errors.New("blueticks: api error")
 	ErrAPIConnection       = errors.New("blueticks: api connection error")
 	ErrValidation          = errors.New("blueticks: validation error")
-	ErrWebhookVerification = errors.New("blueticks: webhook verification failed")
 )
 
 // APIError is the canonical typed error for non-2xx responses from the Blueticks
@@ -98,21 +97,6 @@ func (e *ValidationError) Error() string {
 }
 
 func (e *ValidationError) Unwrap() error { return ErrValidation }
-
-// WebhookVerificationError indicates a webhook signature or timestamp didn't
-// validate. Always wraps ErrWebhookVerification for errors.Is matching.
-type WebhookVerificationError struct {
-	Reason string
-}
-
-func (e *WebhookVerificationError) Error() string {
-	if e == nil {
-		return ""
-	}
-	return "blueticks: webhook verification failed: " + e.Reason
-}
-
-func (e *WebhookVerificationError) Unwrap() error { return ErrWebhookVerification }
 
 // fromEnvelope maps a non-2xx response body to an APIError carrying the
 // appropriate category sentinel.

@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/serenix-com/blueticks-go.svg)](https://pkg.go.dev/github.com/serenix-com/blueticks-go)
 
-Official Go client for the [Blueticks API](https://dev.blueticks.co/docs/api) — schedule WhatsApp messages, run campaigns, and verify webhooks from Go services.
+Official Go client for the [Blueticks API](https://dev.blueticks.co/docs/api) — schedule WhatsApp messages, run campaigns, and manage webhooks from Go services.
 
 ## Install
 
@@ -49,7 +49,7 @@ supplied.
 | `client.Messages`  | `/v1/messages` — send, get, list                    |
 | `client.Audiences` | `/v1/audiences` — CRUD + contact ops                |
 | `client.Campaigns` | `/v1/campaigns` — create, list, pause/resume/cancel |
-| `client.Webhooks`  | `/v1/webhooks` — register subscriptions, rotate secret |
+| `client.Webhooks`  | `/v1/webhooks` — register & manage subscriptions (CRUD) |
 | `client.Chats`     | `/v1/chats` — list, search, history, media          |
 | `client.Contacts`  | `/v1/contacts`                                      |
 | `client.Groups`    | `/v1/groups` — admin / membership                   |
@@ -58,19 +58,6 @@ supplied.
 
 Every resource method takes `ctx context.Context` first, returns a typed
 struct (or `*Page` envelope) plus an `error`.
-
-## Webhook verification
-
-```go
-event, err := blueticks.VerifyWebhook(rawBody, r.Header, secret)
-if errors.Is(err, blueticks.ErrWebhookVerification) {
-    http.Error(w, "bad signature", http.StatusUnauthorized)
-    return
-}
-```
-
-Pass the *raw* request body — re-marshalling JSON will invalidate the HMAC
-signature.
 
 ## Errors
 
@@ -92,7 +79,7 @@ backoff and jitter. Cap defaults to 3 retries; override via
 ## Examples
 
 - [`examples/send`](./examples/send) — minimal send example.
-- [`examples/webhook`](./examples/webhook) — verify and dispatch incoming events.
+- [`examples/webhook`](./examples/webhook) — register and list webhook subscriptions.
 
 ## License
 

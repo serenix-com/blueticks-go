@@ -5,6 +5,23 @@ All notable changes to the Blueticks Go SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.3.0 — 2026-06-18
+
+Webhook payload signing was dropped backend-side: deliveries are no longer
+HMAC-signed, webhook create responses no longer return a `secret`, and
+`POST /v1/webhooks/{id}/rotate-secret` was removed. The webhook resource is
+now plain CRUD (Create / List / Get / Update / Delete).
+
+### Removed
+
+- `VerifyWebhook` helper and the `WithVerifyTolerance` / `DefaultWebhookTolerance`
+  knobs (deleted `webhooks_verify.go`).
+- `Webhooks.RotateSecret` — the `/v1/webhooks/{id}/rotate-secret` endpoint no
+  longer exists.
+- `WebhookCreateResult` and `WebhookEvent` types. `Webhooks.Create` now returns
+  the plain `*Webhook` (no `Secret` field).
+- `WebhookVerificationError` type and the `ErrWebhookVerification` sentinel.
+
 ## v1.2.0 — 2026-05-22
 
 OpenAPI parity pass. The SDK now matches `backend/openapi.json`

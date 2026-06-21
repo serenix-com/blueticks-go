@@ -243,21 +243,6 @@ type Webhook struct {
 	CreatedAt   string   `json:"createdAt"`
 }
 
-// WebhookCreateResult is returned from Create / RotateSecret. It is a
-// Webhook plus the (never-shown-again) Secret used to verify deliveries.
-type WebhookCreateResult struct {
-	Webhook
-	Secret string `json:"secret"`
-}
-
-// WebhookEvent is the parsed body of a webhook delivery.
-type WebhookEvent struct {
-	ID        string                 `json:"id"`
-	Type      string                 `json:"type"`
-	CreatedAt string                 `json:"createdAt"`
-	Data      map[string]interface{} `json:"data"`
-}
-
 // CreateWebhookParams is the body for WebhooksResource.Create.
 type CreateWebhookParams struct {
 	URL         string   `json:"url"`

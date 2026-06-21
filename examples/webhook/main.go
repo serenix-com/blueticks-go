@@ -1,59 +1,37 @@
-// Package main demonstrates verifying an incoming webhook delivery and
-// dispatching on its event type.
+// Package main demonstrates registering and listing webhook subscriptions.
 //
-//	BLUETICKS_WEBHOOK_SECRET=whsec_xxx go run ./examples/webhook
-//
-// Then point your Blueticks webhook subscription at this server (use ngrok or
-// similar to expose the port).
+//	BLUETICKS_API_KEY=sk_live_xxx go run ./examples/webhook
 package main
 
 import (
-	"errors"
-	"io"
+	"context"
+	"fmt"
 	"log"
-	"net/http"
-	"os"
 
 	blueticks "github.com/serenix-com/blueticks-go"
 )
 
 func main() {
-	secret := os.Getenv("BLUETICKS_WEBHOOK_SECRET")
-	if secret == "" {
-		log.Fatal("BLUETICKS_WEBHOOK_SECRET is required")
+	c, err := blueticks.NewClient()
+	if err != nil {
+		log.Fatalf("init: %v", err)
 	}
+	ctx := context.Background()
 
-	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "read body", http.StatusBadRequest)
-			return
-		}
-		event, err := blueticks.VerifyWebhook(body, r.Header, secret)
-		if err != nil {
-			if errors.Is(err, blueticks.ErrWebhookVerification) {
-				log.Printf("rejected webhook: %v", err)
-				http.Error(w, "bad signature", http.StatusUnauthorized)
-				return
-			}
-			http.Error(w, "internal", http.StatusInternalServerError)
-			return
-		}
-
-		switch event.Type {
-		case "message.delivered":
-			log.Printf("delivered: %v", event.Data)
-		case "message.read":
-			log.Printf("read: %v", event.Data)
-		default:
-			log.Printf("event %s: %v", event.Type, event.Data)
-		}
-		w.WriteHeader(http.StatusOK)
+	wh, err := c.Webhooks.Create(ctx, blueticks.CreateWebhookParams{
+		URL:    "https://example.com/webhook",
+		Events: []string{"message.delivered", "message.read"},
 	})
+	if err != nil {
+		log.Fatalf("create webhook: %v", err)
+	}
+	fmt.Printf("created webhook %s -> %s\n", wh.ID, wh.URL)
 
-	addr := ":8081"
-	log.Printf("listening on %s/webhook", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatal(err)
+	page, err := c.Webhooks.List(ctx, blueticks.ListWebhooksParams{})
+	if err != nil {
+		log.Fatalf("list webhooks: %v", err)
+	}
+	for _, w := range page.Data {
+		fmt.Printf("webhook %s status=%s events=%v\n", w.ID, w.Status, w.Events)
 	}
 }

@@ -2419,51 +2419,6 @@
         ],
         "type": "object"
       },
-      "WebhookCreateResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "description": {
-            "nullable": true,
-            "type": "string"
-          },
-          "events": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "id": {
-            "type": "string"
-          },
-          "secret": {
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "enabled",
-              "disabled"
-            ],
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "url",
-          "events",
-          "description",
-          "status",
-          "createdAt",
-          "secret"
-        ],
-        "type": "object"
-      },
       "WebhookResponse": {
         "additionalProperties": false,
         "properties": {
@@ -13209,7 +13164,7 @@
         ]
       },
       "post": {
-        "description": "Register a new webhook. Returns the signing secret exactly once.",
+        "description": "Register a new webhook.",
         "operationId": "webhooks.create",
         "requestBody": {
           "content": {
@@ -13325,9 +13280,6 @@
                         "id": {
                           "type": "string"
                         },
-                        "secret": {
-                          "type": "string"
-                        },
                         "status": {
                           "enum": [
                             "enabled",
@@ -13345,8 +13297,7 @@
                         "events",
                         "description",
                         "status",
-                        "createdAt",
-                        "secret"
+                        "createdAt"
                       ],
                       "type": "object"
                     },
@@ -13973,174 +13924,6 @@
           "Webhooks"
         ]
       }
-    },
-    "/v1/webhooks/{id}/rotate-secret": {
-      "post": {
-        "description": "Rotate the signing secret. Returns the new secret exactly once. Requires `webhooks:write` scope.",
-        "operationId": "webhooks.rotatesecret.create",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "data": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "createdAt": {
-                          "format": "date-time",
-                          "type": "string"
-                        },
-                        "description": {
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "events": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "id": {
-                          "type": "string"
-                        },
-                        "secret": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "enum": [
-                            "enabled",
-                            "disabled"
-                          ],
-                          "type": "string"
-                        },
-                        "url": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "url",
-                        "events",
-                        "description",
-                        "status",
-                        "createdAt",
-                        "secret"
-                      ],
-                      "type": "object"
-                    },
-                    "success": {
-                      "description": "Always `true` on success responses.",
-                      "enum": [
-                        true
-                      ],
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "new secret"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Bad request — invalid params or body."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Missing or invalid API key."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "API key lacks the required scope."
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Resource not found."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Validation failed — see `error.details` for per-field issues."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Rate limit exceeded — back off and retry."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "Internal server error."
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": [
-              "webhooks:write"
-            ]
-          }
-        ],
-        "summary": "Rotate webhook secret",
-        "tags": [
-          "Webhooks"
-        ]
-      }
     }
   },
   "servers": [
@@ -14194,7 +13977,7 @@
       "name": "Scheduled Messages"
     },
     {
-      "description": "Register URLs to receive signed HTTPS POSTs on Blueticks events.",
+      "description": "Register URLs to receive HTTPS POSTs on Blueticks events.",
       "name": "Webhooks"
     }
   ]
