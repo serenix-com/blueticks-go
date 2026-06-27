@@ -82,9 +82,9 @@ type GroupsPage struct {
 
 // NewslettersPage is the paginated response from NewslettersResource.List.
 type NewslettersPage struct {
-	Data       []Newsletter `json:"data"`
-	HasMore    bool         `json:"hasMore"`
-	NextCursor *string      `json:"nextCursor,omitempty"`
+	Data       []NewsletterListItem `json:"data"`
+	HasMore    bool                 `json:"hasMore"`
+	NextCursor *string              `json:"nextCursor,omitempty"`
 }
 
 // --- Ping --------------------------------------------------------------------
@@ -117,16 +117,31 @@ const (
 	NewsletterVerificationUnverified = "UNVERIFIED"
 )
 
-// Newsletter is the response from POST /v1/newsletters, GET /v1/newsletters,
-// and GET /v1/newsletters/{id}.
+// Newsletter is the response from POST /v1/newsletters and
+// GET /v1/newsletters/{id}. The identity field is `newsletterId`.
 //
-// Pointer fields (Description, Owner, CreatedAt, Subscribers, Invite,
+// Pointer fields (Description, CreatedAt, Subscribers, Invite,
 // Verification) are nullable on the wire — nil means the server returned null.
 type Newsletter struct {
-	ID           string  `json:"id"`
+	NewsletterID string  `json:"newsletterId"`
 	Name         string  `json:"name"`
 	Description  *string `json:"description"`
-	Owner        *string `json:"owner"`
+	CreatedAt    *string `json:"createdAt"`
+	Subscribers  *int    `json:"subscribers"`
+	Invite       *string `json:"invite"`
+	Verification *string `json:"verification"`
+}
+
+// NewsletterListItem is a single row from GET /v1/newsletters. It mirrors
+// Newsletter except the identity field is `chatId` (matching how chats,
+// contacts, and groups list endpoints key rows).
+//
+// Pointer fields (Description, CreatedAt, Subscribers, Invite,
+// Verification) are nullable on the wire — nil means the server returned null.
+type NewsletterListItem struct {
+	ChatID       string  `json:"chatId"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description"`
 	CreatedAt    *string `json:"createdAt"`
 	Subscribers  *int    `json:"subscribers"`
 	Invite       *string `json:"invite"`

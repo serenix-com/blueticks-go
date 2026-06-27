@@ -1620,9 +1620,13 @@
         "pattern": "^\\d+@newsletter$",
         "type": "string"
       },
-      "NewsletterResponse": {
+      "NewsletterListItem": {
         "additionalProperties": false,
         "properties": {
+          "chatId": {
+            "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
+            "type": "string"
+          },
           "createdAt": {
             "format": "date-time",
             "nullable": true,
@@ -1633,10 +1637,6 @@
             "nullable": true,
             "type": "string"
           },
-          "id": {
-            "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
-            "type": "string"
-          },
           "invite": {
             "description": "Invite code (suffix of https://whatsapp.com/channel/<invite>).",
             "nullable": true,
@@ -1644,11 +1644,6 @@
           },
           "name": {
             "description": "Display name of the newsletter / WhatsApp channel.",
-            "type": "string"
-          },
-          "owner": {
-            "description": "Owner JID, if returned by the engine.",
-            "nullable": true,
             "type": "string"
           },
           "subscribers": {
@@ -1666,10 +1661,60 @@
           }
         },
         "required": [
-          "id",
+          "chatId",
           "name",
           "description",
-          "owner",
+          "createdAt",
+          "subscribers",
+          "invite",
+          "verification"
+        ],
+        "type": "object"
+      },
+      "NewsletterResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional description.",
+            "nullable": true,
+            "type": "string"
+          },
+          "invite": {
+            "description": "Invite code (suffix of https://whatsapp.com/channel/<invite>).",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the newsletter / WhatsApp channel.",
+            "type": "string"
+          },
+          "newsletterId": {
+            "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
+            "type": "string"
+          },
+          "subscribers": {
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "verification": {
+            "enum": [
+              "VERIFIED",
+              "UNVERIFIED"
+            ],
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "newsletterId",
+          "name",
+          "description",
           "createdAt",
           "subscribers",
           "invite",
@@ -2156,7 +2201,7 @@
             "type": "string"
           },
           "text": {
-            "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Joni Naor](972544325389@c.us)`.",
+            "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Jon Daw](xxxxxxxxxxxx@c.us)`.",
             "maxLength": 4096,
             "type": "string"
           },
@@ -2241,7 +2286,7 @@
             "type": "string"
           },
           "text": {
-            "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Joni Naor](972544325389@c.us)`.",
+            "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Jon Daw](xxxxxxxxxxxx@c.us)`.",
             "maxLength": 4096,
             "type": "string"
           },
@@ -10070,7 +10115,7 @@
     },
     "/v1/messages/{chatId}": {
       "post": {
-        "description": "Send a message immediately to a specific chat. The body is the same FLAT shape as `POST /v1/scheduled-messages` minus `to` (derived from the URL path) and `sendAt` (this endpoint is fire-and-forget). Set `type` to `text`, `media`, or `poll`. The dispatch is direct — no DB row is created; the response carries the WhatsApp wire key under `key`. For scheduled or queue-managed sends use `POST /v1/scheduled-messages` instead. Requires `messages:write`.\n\n### Sending media (`type: \"media\"`)\n\nProvide the media **one** of these ways:\n\n- **`mediaUrl`** — a public `https://` URL to the file.\n- **`mediaBase64`** — the file bytes base64-encoded (or a `data:` URL), inline in the JSON body.\n- **Upload a file** — send the request as `multipart/form-data` with the file in a **`mediaFile`** part. See the cURL example below.\n\nIf both `mediaUrl` and `mediaBase64` are present, `mediaUrl` wins. Optional: `mediaFilename` (display name) and `mediaKind` (`image` · `video` · `audio` · `document` · `sticker` · `voice` · `gif`; auto-detected otherwise).\n\n> In the Body panel, the **Attach a file** control has a content-type dropdown next to it. Pick `application/json` to inline a small file as base64 in `mediaBase64`, or `multipart/form-data` to upload the raw file (no 10 MB JSON-body limit) — then just press **Send**. The cURL below is the multipart equivalent.\n\n```bash\ncurl -X POST \"https://api.blueticks.co/v1/messages/120363000000000000@g.us\" \\\n  -H \"Authorization: Bearer $BLUETICKS_API_KEY\" \\\n  -F \"type=media\" \\\n  -F \"text=Here is the file\" \\\n  -F \"mediaFile=@/path/to/photo.png\"\n```\n\n### Mentioning contacts\n\nMentions are written **inline in `text`** — there is no separate field. Use `@[Display Name](<jid>)`:\n\n```\nHi @[Joni Naor](972544325389@c.us) this is a test\n```",
+        "description": "Send a message immediately to a specific chat. The body is the same FLAT shape as `POST /v1/scheduled-messages` minus `to` (derived from the URL path) and `sendAt` (this endpoint is fire-and-forget). Set `type` to `text`, `media`, or `poll`. The dispatch is direct — no DB row is created; the response carries the WhatsApp wire key under `key`. For scheduled or queue-managed sends use `POST /v1/scheduled-messages` instead. Requires `messages:write`.\n\n### Sending media (`type: \"media\"`)\n\nProvide the media **one** of these ways:\n\n- **`mediaUrl`** — a public `https://` URL to the file.\n- **`mediaBase64`** — the file bytes base64-encoded (or a `data:` URL), inline in the JSON body.\n- **Upload a file** — send the request as `multipart/form-data` with the file in a **`mediaFile`** part. See the cURL example below.\n\nIf both `mediaUrl` and `mediaBase64` are present, `mediaUrl` wins. Optional: `mediaFilename` (display name) and `mediaKind` (`image` · `video` · `audio` · `document` · `sticker` · `voice` · `gif`; auto-detected otherwise).\n\n> In the Body panel, the **Attach a file** control has a content-type dropdown next to it. Pick `application/json` to inline a small file as base64 in `mediaBase64`, or `multipart/form-data` to upload the raw file (no 10 MB JSON-body limit) — then just press **Send**. The cURL below is the multipart equivalent.\n\n```bash\ncurl -X POST \"https://api.blueticks.co/v1/messages/120363000000000000@g.us\" \\\n  -H \"Authorization: Bearer $BLUETICKS_API_KEY\" \\\n  -F \"type=media\" \\\n  -F \"text=Here is the file\" \\\n  -F \"mediaFile=@/path/to/photo.png\"\n```\n\n### Mentioning contacts\n\nMentions are written **inline in `text`** — there is no separate field. Use `@[Display Name](<jid>)`:\n\n```\nHi @[Jon Daw](xxxxxxxxxxxx@c.us) this is a test\n```",
         "operationId": "messages.create",
         "parameters": [
           {
@@ -10148,7 +10193,7 @@
                     "type": "string"
                   },
                   "text": {
-                    "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Joni Naor](972544325389@c.us)`.",
+                    "description": "Text body (required for type=text) or optional media caption (type=media). Up to 4096 chars. Mention a contact inline with `@[Display Name](<jid>)`, e.g. `Hi @[Jon Daw](xxxxxxxxxxxx@c.us)`.",
                     "maxLength": 4096,
                     "type": "string"
                   },
@@ -10728,61 +10773,7 @@
                   "properties": {
                     "data": {
                       "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "createdAt": {
-                            "format": "date-time",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "description": {
-                            "description": "Optional description.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "id": {
-                            "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
-                            "type": "string"
-                          },
-                          "invite": {
-                            "description": "Invite code (suffix of https://whatsapp.com/channel/<invite>).",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "name": {
-                            "description": "Display name of the newsletter / WhatsApp channel.",
-                            "type": "string"
-                          },
-                          "owner": {
-                            "description": "Owner JID, if returned by the engine.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "subscribers": {
-                            "minimum": 0,
-                            "nullable": true,
-                            "type": "integer"
-                          },
-                          "verification": {
-                            "enum": [
-                              "VERIFIED",
-                              "UNVERIFIED"
-                            ],
-                            "nullable": true,
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "description",
-                          "owner",
-                          "createdAt",
-                          "subscribers",
-                          "invite",
-                          "verification"
-                        ],
-                        "type": "object"
+                        "$ref": "#/components/schemas/NewsletterListItem"
                       },
                       "type": "array"
                     },
@@ -10940,10 +10931,6 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "id": {
-                          "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
-                          "type": "string"
-                        },
                         "invite": {
                           "description": "Invite code (suffix of https://whatsapp.com/channel/<invite>).",
                           "nullable": true,
@@ -10953,9 +10940,8 @@
                           "description": "Display name of the newsletter / WhatsApp channel.",
                           "type": "string"
                         },
-                        "owner": {
-                          "description": "Owner JID, if returned by the engine.",
-                          "nullable": true,
+                        "newsletterId": {
+                          "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
                           "type": "string"
                         },
                         "subscribers": {
@@ -10973,10 +10959,9 @@
                         }
                       },
                       "required": [
-                        "id",
+                        "newsletterId",
                         "name",
                         "description",
-                        "owner",
                         "createdAt",
                         "subscribers",
                         "invite",
@@ -11112,10 +11097,6 @@
                           "nullable": true,
                           "type": "string"
                         },
-                        "id": {
-                          "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
-                          "type": "string"
-                        },
                         "invite": {
                           "description": "Invite code (suffix of https://whatsapp.com/channel/<invite>).",
                           "nullable": true,
@@ -11125,9 +11106,8 @@
                           "description": "Display name of the newsletter / WhatsApp channel.",
                           "type": "string"
                         },
-                        "owner": {
-                          "description": "Owner JID, if returned by the engine.",
-                          "nullable": true,
+                        "newsletterId": {
+                          "description": "Newsletter JID, e.g. 120363201733549020@newsletter.",
                           "type": "string"
                         },
                         "subscribers": {
@@ -11145,10 +11125,9 @@
                         }
                       },
                       "required": [
-                        "id",
+                        "newsletterId",
                         "name",
                         "description",
-                        "owner",
                         "createdAt",
                         "subscribers",
                         "invite",
