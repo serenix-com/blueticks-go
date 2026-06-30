@@ -11,7 +11,7 @@ import (
 //
 //	c, err := blueticks.NewClient(blueticks.WithAPIKey("sk_..."))
 //	if err != nil { ... }
-//	msg, err := c.ScheduledMessages.Create(ctx, blueticks.CreateScheduledMessageParams{Type: blueticks.MessageTypeText, To: "+15555550100", Text: "hi"})
+//	msg, err := c.ScheduledMessages.Create(ctx, "+15555550100", blueticks.CreateScheduledMessageParams{Type: blueticks.MessageTypeText, Text: "hi"})
 type Client struct {
 	apiKey     string
 	baseURL    string

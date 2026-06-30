@@ -365,31 +365,6 @@ func (r *ChatsResource) GetMedia(ctx context.Context, waMessageKey, chatID strin
 	return out, nil
 }
 
-// GetMediaURL returns a hosted URL for the message media without inlining
-// bytes. Faster + cheaper than GetMedia when the caller can fetch the URL
-// themselves.
-//
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) GetMediaURL(ctx context.Context, waMessageKey, chatID string) (*MediaURLResponse, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodGet,
-		path:   "/v1/messages/media_url/" + url.PathEscape(waMessageKey),
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &MediaURLResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // BatchMessageAcks fetches ack state for up to 200 sent messages in one call.
 // Useful for campaign dashboards and status reconciliation.
 func (r *ChatsResource) BatchMessageAcks(ctx context.Context, params BatchMessageAcksParams) (*BatchMessageAcksResponse, error) {

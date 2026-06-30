@@ -79,8 +79,6 @@ func TestChatsActions(t *testing.T) {
 				t.Errorf("expected chatId query, got %q", got)
 			}
 			jsonResponse(w, `{"ack":3}`)
-		case r.URL.Path == "/v1/messages/media_url/k1":
-			jsonResponse(w, `{"url":"https://example.com/m.jpg"}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/messages/load_older":
 			jsonResponse(w, `{"totalMessages":120,"added":40,"canLoadMore":true}`)
 		case r.URL.Path == "/v1/chats/message_acks":
@@ -106,10 +104,6 @@ func TestChatsActions(t *testing.T) {
 	ack, err := c.Chats.GetMessageAck(ctx, "k1", "c1@c.us")
 	if err != nil || ack.Ack == nil || *ack.Ack != 3 {
 		t.Fatalf("GetMessageAck: %v %+v", err, ack)
-	}
-	mu, err := c.Chats.GetMediaURL(ctx, "k1", "")
-	if err != nil || mu.URL == nil || *mu.URL != "https://example.com/m.jpg" {
-		t.Fatalf("GetMediaURL: %v %+v", err, mu)
 	}
 	lo, err := c.Chats.LoadOlderMessages(ctx, "c1@c.us")
 	if err != nil || !lo.CanLoadMore || lo.Added == nil || *lo.Added != 40 {
@@ -139,9 +133,6 @@ func TestChatsDecodesEmptyTypedResponses(t *testing.T) {
 	}
 	if err := decodeJSON([]byte(`{}`), &LoadOlderMessagesResponse{}); err != nil {
 		t.Fatalf("LoadOlderMessagesResponse: %v", err)
-	}
-	if err := decodeJSON([]byte(`{}`), &MediaURLResponse{}); err != nil {
-		t.Fatalf("MediaURLResponse: %v", err)
 	}
 	if err := decodeJSON([]byte(`{}`), &BatchMessageAcksResponse{}); err != nil {
 		t.Fatalf("BatchMessageAcksResponse: %v", err)

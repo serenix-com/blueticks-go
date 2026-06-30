@@ -18,10 +18,10 @@ type ScheduledMessagesResource struct {
 // the request to make this call safe to retry — the key is sent as the
 // `Idempotency-Key` header and the server short-circuits duplicate calls
 // within its replay window.
-func (r *ScheduledMessagesResource) Create(ctx context.Context, params CreateScheduledMessageParams) (*ScheduledMessage, error) {
+func (r *ScheduledMessagesResource) Create(ctx context.Context, chatID string, params CreateScheduledMessageParams) (*ScheduledMessage, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method:         http.MethodPost,
-		path:           "/v1/scheduled-messages",
+		path:           "/v1/scheduled-messages/" + url.PathEscape(chatID),
 		body:           params,
 		idempotencyKey: params.IdempotencyKey,
 	})

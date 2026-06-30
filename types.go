@@ -380,15 +380,6 @@ type LoadOlderMessagesResponse struct {
 	CanLoadMore   bool `json:"canLoadMore"`
 }
 
-// MediaURLResponse is the response from
-// GET /v1/messages/media_url/{waMessageKey}.
-//
-// URL is a pointer because the OpenAPI declares it nullable; nil means the
-// engine could not produce a hosted URL.
-type MediaURLResponse struct {
-	URL *string `json:"url"`
-}
-
 // BatchMessageAcksParams is the body for ChatsResource.BatchMessageAcks.
 type BatchMessageAcksParams struct {
 	MessageKeys []string `json:"messageKeys"`
@@ -586,16 +577,15 @@ type SendPollObject struct {
 //
 //	params := blueticks.CreateScheduledMessageParams{
 //	    Type: blueticks.MessageTypeText,
-//	    To:   "+15551234567",
 //	    Text: "hello",
 //	}
 //
-// The server validates the type/variant pair (Text for "text", Media for
+// The recipient is supplied as the chatID path argument to Create, not on the
+// body. The server validates the type/variant pair (Text for "text", Media for
 // "media", Poll for "poll").
 type CreateScheduledMessageParams struct {
 	// Type is the discriminator: "text", "media", or "poll".
 	Type string `json:"type"`
-	To   string `json:"to"`
 	// Text is required when Type == "text".
 	Text string `json:"text,omitempty"`
 	// LinkPreview is optional when Type == "text".

@@ -14,7 +14,7 @@ const smFixture = `{"id":"sm_1","key":null,"to":"+15555550100","from":null,"type
 
 func TestScheduledMessagesCreateText(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages/+15555550100" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
 		if got := r.Header.Get("Idempotency-Key"); got != "key_1" {
@@ -23,13 +23,13 @@ func TestScheduledMessagesCreateText(t *testing.T) {
 		body, _ := io.ReadAll(r.Body)
 		var sent map[string]any
 		_ = json.Unmarshal(body, &sent)
-		if sent["type"] != "text" || sent["to"] != "+15555550100" || sent["text"] != "hi" {
+		if sent["type"] != "text" || sent["text"] != "hi" {
 			t.Errorf("unexpected body: %v", sent)
 		}
 		jsonResponse(w, smFixture)
 	})
-	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
-		Type: MessageTypeText, To: "+15555550100", Text: "hi", IdempotencyKey: "key_1",
+	got, err := c.ScheduledMessages.Create(context.Background(), "+15555550100", CreateScheduledMessageParams{
+		Type: MessageTypeText, Text: "hi", IdempotencyKey: "key_1",
 	})
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -41,7 +41,7 @@ func TestScheduledMessagesCreateText(t *testing.T) {
 
 func TestScheduledMessagesCreateMedia(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages/+15555550100" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
 		body, _ := io.ReadAll(r.Body)
@@ -53,9 +53,8 @@ func TestScheduledMessagesCreateMedia(t *testing.T) {
 		mediaFix := `{"id":"sm_2","key":null,"to":"+15555550100","from":null,"type":"media","text":null,"mediaUrl":"https://cdn.example.com/x.pdf","mediaKind":"document","pollQuestion":null,"status":"pending","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"linkPreview":null}`
 		jsonResponse(w, mediaFix)
 	})
-	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
+	got, err := c.ScheduledMessages.Create(context.Background(), "+15555550100", CreateScheduledMessageParams{
 		Type:  MessageTypeMedia,
-		To:    "+15555550100",
 		Media: &SendMediaObject{URL: "https://cdn.example.com/x.pdf", Kind: "document", Filename: "receipt.pdf"},
 	})
 	if err != nil {
@@ -68,7 +67,7 @@ func TestScheduledMessagesCreateMedia(t *testing.T) {
 
 func TestScheduledMessagesCreatePoll(t *testing.T) {
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages" {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages/+15555550100" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
 		body, _ := io.ReadAll(r.Body)
@@ -80,9 +79,8 @@ func TestScheduledMessagesCreatePoll(t *testing.T) {
 		pollFix := `{"id":"sm_3","key":null,"to":"+15555550100","from":null,"type":"poll","text":null,"mediaUrl":null,"mediaKind":null,"pollQuestion":"Pizza?","status":"pending","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"linkPreview":null}`
 		jsonResponse(w, pollFix)
 	})
-	got, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{
+	got, err := c.ScheduledMessages.Create(context.Background(), "+15555550100", CreateScheduledMessageParams{
 		Type: MessageTypePoll,
-		To:   "+15555550100",
 		Poll: &SendPollObject{Question: "Pizza?", Options: []string{"Yes", "No"}},
 	})
 	if err != nil {
@@ -162,7 +160,7 @@ func TestScheduledMessagesDecodeEmpty(t *testing.T) {
 
 func TestScheduledMessagesCreateUnauthorized(t *testing.T) {
 	c, _ := newTestServer(t, unauthorizedHandler)
-	_, err := c.ScheduledMessages.Create(context.Background(), CreateScheduledMessageParams{Type: MessageTypeText, To: "+1", Text: "hi"})
+	_, err := c.ScheduledMessages.Create(context.Background(), "+1", CreateScheduledMessageParams{Type: MessageTypeText, Text: "hi"})
 	expectAuthError(t, err)
 }
 
