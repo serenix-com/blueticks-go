@@ -70,6 +70,10 @@ func TestChatsActions(t *testing.T) {
 		switch {
 		case r.URL.Path == "/v1/chats/c1@c.us/mark_read":
 			jsonResponse(w, `{"ok":true}`)
+		case r.URL.Path == "/v1/chats/c1@c.us/archive":
+			jsonResponse(w, `{"ok":true}`)
+		case r.URL.Path == "/v1/chats/c1@c.us/unarchive":
+			jsonResponse(w, `{"ok":true}`)
 		case r.URL.Path == "/v1/chats/c1@c.us/open":
 			jsonResponse(w, `{"chatId":"c1@c.us"}`)
 		case r.URL.Path == "/v1/messages/reactions/k1":
@@ -92,6 +96,14 @@ func TestChatsActions(t *testing.T) {
 	mr, err := c.Chats.MarkRead(ctx, "c1@c.us")
 	if err != nil || !mr.Ok {
 		t.Fatalf("MarkRead: %v %+v", err, mr)
+	}
+	ar, err := c.Chats.Archive(ctx, "c1@c.us")
+	if err != nil || !ar.Ok {
+		t.Fatalf("Archive: %v %+v", err, ar)
+	}
+	ua, err := c.Chats.Unarchive(ctx, "c1@c.us")
+	if err != nil || !ua.Ok {
+		t.Fatalf("Unarchive: %v %+v", err, ua)
 	}
 	op, err := c.Chats.Open(ctx, "c1@c.us")
 	if err != nil || op.ChatID != "c1@c.us" {

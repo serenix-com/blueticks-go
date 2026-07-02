@@ -112,6 +112,38 @@ func (r *ChatsResource) MarkRead(ctx context.Context, chatID string) (*OkRespons
 	return out, nil
 }
 
+// Archive hides the given chat from the main chat list on the connected engine.
+func (r *ChatsResource) Archive(ctx context.Context, chatID string) (*OkResponse, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/archive",
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Unarchive restores the given chat from the archive to the main chat list.
+func (r *ChatsResource) Unarchive(ctx context.Context, chatID string) (*OkResponse, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/unarchive",
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &OkResponse{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Open brings the chat to the foreground on the connected WhatsApp Web client
 // (creating the chat if it doesn't exist yet for the engine). Useful before
 // issuing follow-up reads on a fresh JID.
