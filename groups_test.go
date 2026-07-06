@@ -2,7 +2,9 @@ package blueticks
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -86,6 +88,30 @@ func TestGroupsCRUD(t *testing.T) {
 	}
 	if err := c.Groups.Leave(ctx, "g_1"); err != nil {
 		t.Fatalf("Leave: %v", err)
+	}
+}
+
+func TestGroupsUpdateSettingsDescription(t *testing.T) {
+	groupBody := `{"id":"g_1","name":"Team","description":"New desc","owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch || r.URL.Path != "/v1/groups/g_1" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		buf, _ := io.ReadAll(r.Body)
+		if !strings.Contains(string(buf), `"description":"New desc"`) {
+			t.Errorf("body missing description: %s", buf)
+		}
+		jsonResponse(w, groupBody)
+	})
+	desc := "New desc"
+	g, err := c.Groups.Update(context.Background(), "g_1", UpdateGroupParams{
+		Settings: &GroupSettings{Description: &desc},
+	})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if g.Description == nil || *g.Description != "New desc" {
+		t.Fatalf("unexpected group: %+v", g)
 	}
 }
 

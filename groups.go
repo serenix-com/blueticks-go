@@ -22,6 +22,8 @@ type ListGroupsParams struct {
 	Limit  int
 	Cursor string
 	Q      string // case-insensitive substring match against group name
+	// IncludeArchive includes archived groups (default false → excluded).
+	IncludeArchive bool
 }
 
 // SetGroupPictureParams is the body for GroupsResource.SetPicture.
@@ -47,6 +49,9 @@ func (r *GroupsResource) List(ctx context.Context, params ListGroupsParams) (*Gr
 	}
 	if params.Q != "" {
 		q.Set("q", params.Q)
+	}
+	if params.IncludeArchive {
+		q.Set("includeArchive", "true")
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,

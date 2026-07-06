@@ -46,6 +46,9 @@ func (r *NewslettersResource) List(ctx context.Context, params ListNewslettersPa
 	if params.Cursor != "" {
 		q.Set("cursor", params.Cursor)
 	}
+	if params.IncludeArchive {
+		q.Set("includeArchive", "true")
+	}
 	if len(q) > 0 {
 		opts.query = q
 	}

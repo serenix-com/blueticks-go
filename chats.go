@@ -19,6 +19,8 @@ type ListChatsParams struct {
 	Query  string
 	Limit  int
 	Cursor string
+	// IncludeArchive includes archived chats (default false → excluded).
+	IncludeArchive bool
 }
 
 // ListParticipantsParams is the query-param bundle for ChatsResource.ListParticipants.
@@ -38,6 +40,9 @@ func (r *ChatsResource) List(ctx context.Context, params ListChatsParams) (*Chat
 	}
 	if params.Cursor != "" {
 		q.Set("cursor", params.Cursor)
+	}
+	if params.IncludeArchive {
+		q.Set("includeArchive", "true")
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,

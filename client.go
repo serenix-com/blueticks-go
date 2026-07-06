@@ -31,6 +31,7 @@ type Client struct {
 	Engines           *EnginesResource
 	Newsletters       *NewslettersResource
 	ScheduledMessages *ScheduledMessagesResource
+	Suno              *SunoResource
 }
 
 // Option configures a Client at construction time.
@@ -112,6 +113,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Engines = &EnginesResource{client: c}
 	c.Newsletters = &NewslettersResource{client: c}
 	c.ScheduledMessages = &ScheduledMessagesResource{client: c}
+	c.Suno = &SunoResource{client: c}
 
 	return c, nil
 }

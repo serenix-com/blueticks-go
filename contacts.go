@@ -17,6 +17,8 @@ type ListContactsParams struct {
 	Query  string
 	Limit  int
 	Cursor string
+	// IncludeArchive includes archived chats (default false → excluded).
+	IncludeArchive bool
 }
 
 // List contacts, optionally filtered by free-text query. Cursor-paginated.
@@ -30,6 +32,9 @@ func (r *ContactsResource) List(ctx context.Context, params ListContactsParams) 
 	}
 	if params.Cursor != "" {
 		q.Set("cursor", params.Cursor)
+	}
+	if params.IncludeArchive {
+		q.Set("includeArchive", "true")
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,

@@ -17,7 +17,7 @@ func TestChatsList(t *testing.T) {
 		if r.URL.Query().Get("query") != "alice" {
 			t.Errorf("missing query param")
 		}
-		jsonResponse(w, `{"data":[{"id":"c1@c.us","name":"Alice","isGroup":false}],"hasMore":false}`)
+		jsonResponse(w, `{"data":[{"id":"c1@c.us","name":"Alice","chatType":"contact","pinned":false,"archived":false}],"hasMore":false}`)
 	})
 	got, err := c.Chats.List(context.Background(), ListChatsParams{Query: "alice"})
 	if err != nil {

@@ -160,6 +160,8 @@ type CreateNewsletterParams struct {
 type ListNewslettersParams struct {
 	Limit  int
 	Cursor string
+	// IncludeArchive includes archived newsletters (default false → excluded).
+	IncludeArchive bool
 }
 
 // --- Audiences ---------------------------------------------------------------
@@ -275,42 +277,81 @@ type UpdateWebhookParams struct {
 
 // --- Chats / Engine-sourced --------------------------------------------------
 
-// Chat is a WhatsApp conversation.
+// Documented values for Chat.ChatType. The wire type is `string` (the OpenAPI
+// schema enumerates these values but Go has no dedicated enum type) — compare
+// the field directly against these constants.
+const (
+	ChatTypeContact    = "contact"
+	ChatTypeGroup      = "group"
+	ChatTypeNewsletter = "newsletter"
+)
+
+// Chat is a WhatsApp conversation — a 1:1 contact, a group, or a channel — as
+// seen by the connected engine.
 //
-// Pointer fields preserve the wire-level null vs. empty distinction
-// (the OpenAPI declares them `string|null` / `integer|null`). nil ==
-// "the server returned null"; a non-nil empty string means the field
+// ChatType is one of the ChatType* constants ("contact", "group", or
+// "newsletter"). Pointer fields preserve the wire-level null vs. empty
+// distinction (the OpenAPI declares them `string|null` / `integer|null`).
+// nil == "the server returned null"; a non-nil empty string means the field
 // was present but blank.
 type Chat struct {
 	ID            string  `json:"id"`
 	Name          *string `json:"name,omitempty"`
-	IsGroup       bool    `json:"isGroup"`
-	IsNewsletter  bool    `json:"isNewsletter"`
+	ChatType      string  `json:"chatType"`
+	Pinned        bool    `json:"pinned"`
+	Archived      bool    `json:"archived"`
 	LastMessageAt *string `json:"lastMessageAt,omitempty"`
 	UnreadCount   *int    `json:"unreadCount,omitempty"`
 	MarkedUnread  bool    `json:"markedUnread"`
 }
 
 // Participant is a member of a group chat.
+//
+// Name is nullable on the wire — nil means the engine couldn't resolve a
+// display name for the participant.
 type Participant struct {
-	ChatID       string `json:"chatId"`
-	IsAdmin      bool   `json:"isAdmin"`
-	IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
+	ChatID       string  `json:"chatId"`
+	Name         *string `json:"name,omitempty"`
+	IsAdmin      bool    `json:"isAdmin"`
+	IsSuperAdmin bool    `json:"isSuperAdmin,omitempty"`
 }
 
-// ChatMessage is a message returned by GET /v1/chats/{id}/messages.
+// ChatMessage is a message returned by GET /v1/chats/{id}/messages and
+// GET /v1/messages/{waMessageKey}.
+//
+// QuotedMessage is populated when this message is a reply; nil otherwise.
 type ChatMessage struct {
-	Key       string `json:"key"`
-	ChatID    string `json:"chatId"`
-	From      string `json:"from"`
-	Timestamp string `json:"timestamp,omitempty"`
-	Text      string `json:"text,omitempty"`
-	Type      string `json:"type"`
-	FromMe    bool   `json:"fromMe"`
-	Ack       int    `json:"ack,omitempty"`
-	MediaURL  string `json:"mediaUrl,omitempty"`
-	Caption   string `json:"caption,omitempty"`
-	Filename  string `json:"filename,omitempty"`
+	Key           string         `json:"key"`
+	ChatID        string         `json:"chatId"`
+	From          string         `json:"from"`
+	Timestamp     string         `json:"timestamp,omitempty"`
+	Text          string         `json:"text,omitempty"`
+	Type          string         `json:"type"`
+	FromMe        bool           `json:"fromMe"`
+	Ack           int            `json:"ack,omitempty"`
+	MediaURL      string         `json:"mediaUrl,omitempty"`
+	Caption       string         `json:"caption,omitempty"`
+	Filename      string         `json:"filename,omitempty"`
+	QuotedMessage *QuotedMessage `json:"quotedMessage,omitempty"`
+}
+
+// QuotedMessage is the message a ChatMessage replies to, surfaced inline when
+// present. nil on the parent ChatMessage means the message is not a reply.
+type QuotedMessage struct {
+	WaMessageKey QuotedMessageKey `json:"waMessageKey"`
+	Text         string           `json:"text,omitempty"`
+	Type         string           `json:"type,omitempty"`
+	Author       string           `json:"author,omitempty"`
+}
+
+// QuotedMessageKey is the WhatsApp message key identifying a QuotedMessage.
+// Serialized carries the wire field `_serialized`.
+type QuotedMessageKey struct {
+	FromMe      bool   `json:"fromMe"`
+	Remote      string `json:"remote,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Serialized  string `json:"_serialized,omitempty"`
+	Participant string `json:"participant,omitempty"`
 }
 
 // Documented values for ChatMedia.MediaUnavailable. The wire type is `string`
@@ -476,10 +517,22 @@ type CreateGroupParams struct {
 	Participants []string `json:"participants"`
 }
 
+// GroupSettings is the optional settings bundle inside UpdateGroupParams.
+//
+// All fields are optional pointers — a nil pointer leaves the corresponding
+// group setting unchanged. Description sets the group's description text
+// (1–2048 chars).
+type GroupSettings struct {
+	Announce           *bool   `json:"announce,omitempty"`
+	Restrict           *bool   `json:"restrict,omitempty"`
+	EditInfoAdminsOnly *bool   `json:"editInfoAdminsOnly,omitempty"`
+	Description        *string `json:"description,omitempty"`
+}
+
 // UpdateGroupParams is the body for GroupsResource.Update.
 type UpdateGroupParams struct {
-	Name     string          `json:"name,omitempty"`
-	Settings map[string]bool `json:"settings,omitempty"`
+	Name     string         `json:"name,omitempty"`
+	Settings *GroupSettings `json:"settings,omitempty"`
 }
 
 // --- Scheduled Messages ------------------------------------------------------
@@ -488,12 +541,21 @@ type UpdateGroupParams struct {
 // (the OpenAPI schema enumerates these values but Go has no dedicated enum
 // type) — compare the field directly against these constants.
 const (
-	MessageStatusPending   = "pending"
-	MessageStatusConfirmed = "confirmed"
-	MessageStatusReceived  = "received"
-	MessageStatusRead      = "read"
-	MessageStatusPlayed    = "played"
-	MessageStatusFailed    = "failed"
+	MessageStatusPending        = "pending"
+	MessageStatusBeforeWASend   = "before-wa-send"
+	MessageStatusBtSent         = "bt-sent"
+	MessageStatusSending        = "sending"
+	MessageStatusSent           = "sent"
+	MessageStatusSentPendingAck = "sent_pending_ack"
+	MessageStatusConfirmed      = "confirmed"
+	MessageStatusDelivered      = "delivered"
+	MessageStatusReceived       = "received"
+	MessageStatusRead           = "read"
+	MessageStatusPlayed         = "played"
+	MessageStatusCancelled      = "cancelled"
+	MessageStatusError          = "error"
+	MessageStatusFailed         = "failed"
+	MessageStatusExpired        = "expired"
 )
 
 // Documented values for ScheduledMessage.Type. The wire type is `string`.
@@ -526,31 +588,38 @@ type MessageLinkPreview struct {
 // returned by all /v1/scheduled-messages* endpoints.
 //
 // Type: text | media | poll. Compare against the MessageType* constants.
-// Status: pending | confirmed | received | read | played | failed. Compare
-// against the MessageStatus* constants.
+// Status: pending | before-wa-send | bt-sent | sending | sent |
+// sent_pending_ack | confirmed | delivered | received | read | played |
+// cancelled | error | failed | expired. Compare against the MessageStatus*
+// constants.
+//
+// PollOptions and PollAllowMultiple are populated for poll messages (type ==
+// "poll") and null for other types.
 //
 // Nullable fields use pointer types — nil means the server returned null
 // (not absent).
 type ScheduledMessage struct {
-	ID            string              `json:"id"`
-	Key           *string             `json:"key"`
-	To            string              `json:"to"`
-	From          *string             `json:"from"`
-	Type          string              `json:"type"`
-	Text          *string             `json:"text"`
-	MediaURL      *string             `json:"mediaUrl"`
-	MediaKind     *string             `json:"mediaKind"`
-	PollQuestion  *string             `json:"pollQuestion"`
-	Status        string              `json:"status"`
-	SendAt        *string             `json:"sendAt"`
-	CreatedAt     string              `json:"createdAt"`
-	ConfirmedAt   *string             `json:"confirmedAt"`
-	ReceivedAt    *string             `json:"receivedAt"`
-	ReadAt        *string             `json:"readAt"`
-	PlayedAt      *string             `json:"playedAt"`
-	FailedAt      *string             `json:"failedAt"`
-	FailureReason *string             `json:"failureReason"`
-	LinkPreview   *MessageLinkPreview `json:"linkPreview"`
+	ID                string              `json:"id"`
+	Key               *string             `json:"key"`
+	To                string              `json:"to"`
+	From              *string             `json:"from"`
+	Type              string              `json:"type"`
+	Text              *string             `json:"text"`
+	MediaURL          *string             `json:"mediaUrl"`
+	MediaKind         *string             `json:"mediaKind"`
+	PollQuestion      *string             `json:"pollQuestion"`
+	PollOptions       []string            `json:"pollOptions"`
+	PollAllowMultiple *bool               `json:"pollAllowMultiple"`
+	Status            string              `json:"status"`
+	SendAt            *string             `json:"sendAt"`
+	CreatedAt         string              `json:"createdAt"`
+	ConfirmedAt       *string             `json:"confirmedAt"`
+	ReceivedAt        *string             `json:"receivedAt"`
+	ReadAt            *string             `json:"readAt"`
+	PlayedAt          *string             `json:"playedAt"`
+	FailedAt          *string             `json:"failedAt"`
+	FailureReason     *string             `json:"failureReason"`
+	LinkPreview       *MessageLinkPreview `json:"linkPreview"`
 }
 
 // SendMediaObject is the nested media descriptor inside
@@ -648,4 +717,100 @@ type DeletedRef struct {
 type DeletedResource struct {
 	ID      string `json:"id"`
 	Deleted bool   `json:"deleted"`
+}
+
+// --- Suno --------------------------------------------------------------------
+
+// Documented values for SunoClip.Status. The wire type is `string` (the
+// OpenAPI schema enumerates these values but Go has no dedicated enum type) —
+// compare the field directly against these constants. Terminal states are
+// "complete" and "error".
+const (
+	SunoStatusSubmitted = "submitted"
+	SunoStatusQueued    = "queued"
+	SunoStatusRunning   = "running"
+	SunoStatusStreaming = "streaming"
+	SunoStatusComplete  = "complete"
+	SunoStatusError     = "error"
+)
+
+// Documented values for SunoGenerateParams.VocalGender. The wire type is
+// `string`.
+const (
+	SunoVocalMale   = "m"
+	SunoVocalFemale = "f"
+)
+
+// SunoClip is a single generated song variant, returned by
+// GET /v1/suno/songs/{id} and inside SunoGenerateResult.Clips.
+//
+// Status is one of the SunoStatus* constants. AudioURL, ImageURL, Title,
+// DurationSec, and Model are always present but null until available (nil ==
+// the server returned null). ErrorType and ErrorMessage are only set when
+// Status == "error".
+type SunoClip struct {
+	ID           string   `json:"id"`
+	Status       string   `json:"status"`
+	AudioURL     *string  `json:"audioUrl"`
+	ImageURL     *string  `json:"imageUrl"`
+	Title        *string  `json:"title"`
+	DurationSec  *float64 `json:"durationSec"`
+	Model        *string  `json:"model"`
+	ErrorType    *string  `json:"errorType,omitempty"`
+	ErrorMessage *string  `json:"errorMessage,omitempty"`
+}
+
+// SunoGenerateResult is the response from POST /v1/suno/songs. Clips holds the
+// generated variants (typically two) — poll each by id with SunoResource.GetSong.
+type SunoGenerateResult struct {
+	JobID string     `json:"jobId"`
+	Clips []SunoClip `json:"clips"`
+}
+
+// SunoUpload is the response from POST /v1/suno/uploads. Pass UploadID to
+// SunoResource.Generate (as SunoGenerateParams.UploadID) to cover/transform
+// the uploaded recording.
+type SunoUpload struct {
+	UploadID string `json:"uploadId"`
+	Status   string `json:"status"`
+}
+
+// SunoAccount is the response from GET /v1/suno/account.
+//
+// MonthlyLimit, MonthlyUsage, and Plan are nullable on the wire — nil means
+// the value is unknown.
+type SunoAccount struct {
+	CreditsLeft  float64  `json:"creditsLeft"`
+	MonthlyLimit *float64 `json:"monthlyLimit"`
+	MonthlyUsage *float64 `json:"monthlyUsage"`
+	Plan         *string  `json:"plan"`
+}
+
+// SunoGenerateParams is the request body for SunoResource.Generate.
+//
+// Lyrics and Style are required. The 0–1 sliders (Weirdness, StyleInfluence,
+// AudioInfluence) and Instrumental are pointers so a deliberate zero value is
+// distinguishable from "unset". VocalGender is one of the SunoVocal*
+// constants. AudioInfluence is only meaningful when UploadID is set.
+type SunoGenerateParams struct {
+	Lyrics         string   `json:"lyrics"`
+	Style          string   `json:"style"`
+	NegativeStyle  string   `json:"negativeStyle,omitempty"`
+	VocalGender    string   `json:"vocalGender,omitempty"`
+	Weirdness      *float64 `json:"weirdness,omitempty"`
+	StyleInfluence *float64 `json:"styleInfluence,omitempty"`
+	AudioInfluence *float64 `json:"audioInfluence,omitempty"`
+	Instrumental   *bool    `json:"instrumental,omitempty"`
+	Model          string   `json:"model,omitempty"`
+	Title          string   `json:"title,omitempty"`
+	UploadID       string   `json:"uploadId,omitempty"`
+	CaptchaToken   string   `json:"captchaToken,omitempty"`
+}
+
+// SunoUploadParams is the request body for SunoResource.Upload. Provide exactly
+// one of AudioURL or AudioBase64.
+type SunoUploadParams struct {
+	AudioURL    string `json:"audioUrl,omitempty"`
+	AudioBase64 string `json:"audioBase64,omitempty"`
+	FileName    string `json:"fileName,omitempty"`
 }
