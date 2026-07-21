@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 
-	blueticks "github.com/serenix-com/blueticks-go"
+	blueticks "github.com/serenix-com/blueticks-go/v2"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("init: %v", err)
 	}
 
-	msg, err := c.ScheduledMessages.Create(context.Background(), to, blueticks.CreateScheduledMessageParams{
+	msg, err := c.ScheduledMessages.Create(context.Background(), to, blueticks.SendMessageParams{
 		Type:           blueticks.MessageTypeText,
 		Text:           "Hello from the Blueticks Go SDK!",
 		IdempotencyKey: "example-send-1",
@@ -31,5 +31,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("send: %v", err)
 	}
-	fmt.Printf("pending message %s (status=%s)\n", msg.ID, msg.Status)
+	fmt.Printf("queued message %s (status=%s)\n", msg.ID, msg.Status)
 }

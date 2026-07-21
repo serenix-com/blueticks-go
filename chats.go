@@ -5,44 +5,59 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 )
 
-// ChatsResource exposes /v1/chats and /v1/chats/{id}/* — every method is
-// a thin wrapper that dispatches to the user's WhatsApp engine.
+// ChatsResource exposes /v1/chats and its chat-level write endpoints. Message
+// operations live on MessagesResource.
 type ChatsResource struct {
 	client *Client
 }
 
 // ListChatsParams is the query-param bundle for ChatsResource.List.
 type ListChatsParams struct {
-	Query  string
-	Limit  int
-	Cursor string
-	// IncludeArchive includes archived chats (default false → excluded).
-	IncludeArchive bool
+	SearchToken         string
+	Filter              string // "groups" | "contacts" | "newsletters"
+	IncludeLastMessage  *bool
+	IncludeExtendedInfo *bool
+	IncludeWithoutName  *bool
+	IncludeArchive      *bool
+	Skip                int
+	Limit               int
 }
 
 // ListParticipantsParams is the query-param bundle for ChatsResource.ListParticipants.
 type ListParticipantsParams struct {
-	Limit  int
-	Cursor string
+	SearchToken string
+	Skip        int
+	Limit       int
 }
 
-// List/search chats, newest first. Cursor-paginated.
+// List/search chats. Offset-paginated.
 func (r *ChatsResource) List(ctx context.Context, params ListChatsParams) (*ChatsPage, error) {
 	q := url.Values{}
-	if params.Query != "" {
-		q.Set("query", params.Query)
+	if params.SearchToken != "" {
+		q.Set("searchToken", params.SearchToken)
+	}
+	if params.Filter != "" {
+		q.Set("filter", params.Filter)
+	}
+	if params.IncludeLastMessage != nil {
+		q.Set("includeLastMessage", strconv.FormatBool(*params.IncludeLastMessage))
+	}
+	if params.IncludeExtendedInfo != nil {
+		q.Set("includeExtendedInfo", strconv.FormatBool(*params.IncludeExtendedInfo))
+	}
+	if params.IncludeWithoutName != nil {
+		q.Set("includeWithoutName", strconv.FormatBool(*params.IncludeWithoutName))
+	}
+	if params.IncludeArchive != nil {
+		q.Set("includeArchive", strconv.FormatBool(*params.IncludeArchive))
+	}
+	if params.Skip > 0 {
+		q.Set("skip", strconv.Itoa(params.Skip))
 	}
 	if params.Limit > 0 {
 		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
-	}
-	if params.IncludeArchive {
-		q.Set("includeArchive", "true")
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -68,23 +83,59 @@ func (r *ChatsResource) Get(ctx context.Context, chatID string) (*Chat, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &Chat{}
-	if err := decodeJSON(body, out); err != nil {
+	var env struct {
+		Data Chat `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
 		return nil, err
 	}
-	return out, nil
+	return &env.Data, nil
 }
 
-// ListParticipants returns chat participants. For group chats, the
-// participant list is paginated; for DMs, the single counterparty is
-// returned in a one-element page.
+// Archive moves the chat to the archived list.
+func (r *ChatsResource) Archive(ctx context.Context, chatID string) (*OkResult, error) {
+	return r.okAction(ctx, chatID, "archive")
+}
+
+// Unarchive restores an archived chat to the main list.
+func (r *ChatsResource) Unarchive(ctx context.Context, chatID string) (*OkResult, error) {
+	return r.okAction(ctx, chatID, "unarchive")
+}
+
+// MarkRead clears the unread badge on the connected engine for the given chat.
+func (r *ChatsResource) MarkRead(ctx context.Context, chatID string) (*OkResult, error) {
+	return r.okAction(ctx, chatID, "mark_read")
+}
+
+func (r *ChatsResource) okAction(ctx context.Context, chatID, action string) (*OkResult, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/" + action,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var env struct {
+		Data OkResult `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
+}
+
+// ListParticipants returns the participants of a chat. For group chats the list
+// is paginated; for DMs the single counterparty is returned. Offset-paginated.
 func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, params ListParticipantsParams) (*ParticipantsPage, error) {
 	q := url.Values{}
+	if params.SearchToken != "" {
+		q.Set("searchToken", params.SearchToken)
+	}
+	if params.Skip > 0 {
+		q.Set("skip", strconv.Itoa(params.Skip))
+	}
 	if params.Limit > 0 {
 		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -95,325 +146,6 @@ func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, par
 		return nil, err
 	}
 	out := &ParticipantsPage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// MarkRead clears the unread badge on the connected engine for the given chat.
-func (r *ChatsResource) MarkRead(ctx context.Context, chatID string) (*OkResponse, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/mark_read",
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Archive hides the given chat from the main chat list on the connected engine.
-func (r *ChatsResource) Archive(ctx context.Context, chatID string) (*OkResponse, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/archive",
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Unarchive restores the given chat from the archive to the main chat list.
-func (r *ChatsResource) Unarchive(ctx context.Context, chatID string) (*OkResponse, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/unarchive",
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Open brings the chat to the foreground on the connected WhatsApp Web client
-// (creating the chat if it doesn't exist yet for the engine). Useful before
-// issuing follow-up reads on a fresh JID.
-func (r *ChatsResource) Open(ctx context.Context, chatID string) (*ChatRef, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/open",
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &ChatRef{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// SendMessage sends a message immediately to a specific chat.
-//
-// The body is the same discriminated union as POST /v1/scheduled-messages minus
-// `to` (derived from the URL path) and `sendAt` (this endpoint is
-// fire-and-forget). Variants: "text", "media", "poll". The dispatch is direct
-// — no DB row is created; the response carries the WhatsApp wire key under
-// `key`. For scheduled or queue-managed sends use ScheduledMessagesResource.Create
-// instead. Pass an IdempotencyKey on the params to make the call safe to retry.
-func (r *ChatsResource) SendMessage(ctx context.Context, chatID string, params SendMessageInChatParams) (*ScheduledMessage, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method:         http.MethodPost,
-		path:           "/v1/chats/" + url.PathEscape(chatID) + "/messages",
-		body:           params,
-		idempotencyKey: params.IdempotencyKey,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &ScheduledMessage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// ListMessages returns messages from a chat.
-//
-// `MessageTypes` is sent as a single comma-separated query value because the
-// OpenAPI schema declares `style: form, explode: false` for that param.
-func (r *ChatsResource) ListMessages(ctx context.Context, chatID string, params ListChatMessagesParams) (*ChatMessagesPage, error) {
-	q := url.Values{}
-	if params.Order != "" {
-		q.Set("order", params.Order)
-	}
-	if params.Query != "" {
-		q.Set("query", params.Query)
-	}
-	if params.Since != "" {
-		q.Set("since", params.Since)
-	}
-	if params.Until != "" {
-		q.Set("until", params.Until)
-	}
-	if params.Limit > 0 {
-		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
-	}
-	if len(params.MessageTypes) > 0 {
-		q.Set("messageTypes", strings.Join(params.MessageTypes, ","))
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodGet,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages",
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &ChatMessagesPage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GetMessage retrieves a single message by its complete WhatsApp message key.
-//
-// Pass an empty chatID to omit the optional chatId query param (the engine
-// resolves the chat from the key when possible).
-func (r *ChatsResource) GetMessage(ctx context.Context, waMessageKey, chatID string) (*ChatMessage, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodGet,
-		path:   "/v1/messages/" + url.PathEscape(waMessageKey),
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &ChatMessage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GetMessageAck returns the WhatsApp ack value for a sent message:
-// -1=error, 0=pending, 1=server, 2=device, 3=read, 4=played; nil when no
-// engine response.
-//
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) GetMessageAck(ctx context.Context, waMessageKey, chatID string) (*MessageAck, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodGet,
-		path:   "/v1/messages/ack/" + url.PathEscape(waMessageKey),
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &MessageAck{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// React adds or replaces a reaction emoji on a message. Pass an empty
-// emoji to clear an existing reaction.
-//
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) React(ctx context.Context, waMessageKey, chatID, emoji string) (*OkResponse, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/messages/reactions/" + url.PathEscape(waMessageKey),
-		query:  q,
-		body:   map[string]string{"emoji": emoji},
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Pin pins a message to the top of its chat by its complete WhatsApp message key.
-// duration is the pin expiry in seconds; pass 0 to use WhatsApp's default of 7 days.
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) Pin(ctx context.Context, waMessageKey, chatID string, duration int) (*OkResponse, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	var reqBody interface{}
-	if duration > 0 {
-		reqBody = map[string]int{"duration": duration}
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/messages/pin/" + url.PathEscape(waMessageKey),
-		query:  q,
-		body:   reqBody,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Unpin removes an existing pin from a message by its complete WhatsApp message key.
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) Unpin(ctx context.Context, waMessageKey, chatID string) (*OkResponse, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/messages/unpin/" + url.PathEscape(waMessageKey),
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &OkResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// LoadOlderMessages asks the engine to pull older history from the connected
-// phone for chats that haven't been fully synced yet. Use this once before
-// paginating with `since` if you need messages older than what's already
-// cached.
-func (r *ChatsResource) LoadOlderMessages(ctx context.Context, chatID string) (*LoadOlderMessagesResponse, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/" + url.PathEscape(chatID) + "/messages/load_older",
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &LoadOlderMessagesResponse{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GetMedia downloads message media. May return base64 inline depending on
-// configuration / media kind; check ChatMedia.MediaUnavailable for failure
-// kinds.
-//
-// Pass an empty chatID to omit the optional chatId query param.
-func (r *ChatsResource) GetMedia(ctx context.Context, waMessageKey, chatID string) (*ChatMedia, error) {
-	q := url.Values{}
-	if chatID != "" {
-		q.Set("chatId", chatID)
-	}
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodGet,
-		path:   "/v1/messages/media/" + url.PathEscape(waMessageKey),
-		query:  q,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &ChatMedia{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// BatchMessageAcks fetches ack state for up to 200 sent messages in one call.
-// Useful for campaign dashboards and status reconciliation.
-func (r *ChatsResource) BatchMessageAcks(ctx context.Context, params BatchMessageAcksParams) (*BatchMessageAcksResponse, error) {
-	body, err := r.client.do(ctx, requestOptions{
-		method: http.MethodPost,
-		path:   "/v1/chats/message_acks",
-		body:   params,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := &BatchMessageAcksResponse{}
 	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}

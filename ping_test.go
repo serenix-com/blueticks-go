@@ -11,20 +11,17 @@ func TestPingRetrieve(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/ping" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"accountId":"acct_1","keyPrefix":"sk_live_1","scopes":["messages:write"]}`)
+		jsonResponse(w, `{"success":true,"data":{"api":"ok","accountId":"acct_1","whatsappConnections":[{"id":"eng_1","type":"gateway","connected":true}]}}`)
 	})
 	got, err := c.Ping.Retrieve(context.Background())
 	if err != nil {
 		t.Fatalf("Retrieve: %v", err)
 	}
-	if got.AccountID != "acct_1" {
-		t.Fatalf("unexpected account_id: %q", got.AccountID)
+	if got.API != "ok" || got.AccountID != "acct_1" {
+		t.Fatalf("unexpected: %+v", got)
 	}
-	if got.KeyPrefix != "sk_live_1" {
-		t.Fatalf("unexpected key_prefix: %q", got.KeyPrefix)
-	}
-	if len(got.Scopes) != 1 || got.Scopes[0] != "messages:write" {
-		t.Fatalf("unexpected scopes: %v", got.Scopes)
+	if len(got.WhatsappConnections) != 1 || got.WhatsappConnections[0].ID != "eng_1" {
+		t.Fatalf("unexpected connections: %+v", got.WhatsappConnections)
 	}
 }
 

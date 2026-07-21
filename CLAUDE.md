@@ -29,8 +29,10 @@ produces must follow these rules.
 - `transport.go`
 - `version.go`
 - `webhooks.go`
+- `webhooks_verify.go`
 - `testhelpers_test.go`
 - `webhooks_test.go`
+- `webhooks_verify_test.go`
 - `go.mod`, `go.sum`
 - `examples/**`
 - `CHANGELOG.md`, `README.md`, `LICENSE`

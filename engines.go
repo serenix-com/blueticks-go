@@ -10,15 +10,18 @@ type EnginesResource struct {
 	client *Client
 }
 
-// Status reports the engine's current connection state.
-func (r *EnginesResource) Status(ctx context.Context) (*EngineStatus, error) {
+// List returns the WhatsApp engines connected to this workspace. The slice is
+// empty when no engine is paired.
+func (r *EnginesResource) List(ctx context.Context) ([]EngineStatus, error) {
 	body, err := r.client.do(ctx, requestOptions{method: http.MethodGet, path: "/v1/engines"})
 	if err != nil {
 		return nil, err
 	}
-	out := &EngineStatus{}
-	if err := decodeJSON(body, out); err != nil {
+	var env struct {
+		Data []EngineStatus `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
 		return nil, err
 	}
-	return out, nil
+	return env.Data, nil
 }

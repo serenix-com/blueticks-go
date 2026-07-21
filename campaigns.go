@@ -14,8 +14,9 @@ type CampaignsResource struct {
 
 // ListCampaignsParams is the query-param bundle for CampaignsResource.List.
 type ListCampaignsParams struct {
-	Limit  int
-	Cursor string
+	Order string // "asc" or "desc" (default "desc")
+	Skip  int
+	Limit int
 }
 
 // Create a campaign.
@@ -28,21 +29,20 @@ func (r *CampaignsResource) Create(ctx context.Context, params CreateCampaignPar
 	if err != nil {
 		return nil, err
 	}
-	out := &Campaign{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeCampaign(body)
 }
 
-// List campaigns, newest first. Cursor-paginated.
+// List campaigns, offset-paginated.
 func (r *CampaignsResource) List(ctx context.Context, params ListCampaignsParams) (*CampaignsPage, error) {
 	q := url.Values{}
+	if params.Order != "" {
+		q.Set("order", params.Order)
+	}
+	if params.Skip > 0 {
+		q.Set("skip", strconv.Itoa(params.Skip))
+	}
 	if params.Limit > 0 {
 		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -68,11 +68,7 @@ func (r *CampaignsResource) Get(ctx context.Context, id string) (*Campaign, erro
 	if err != nil {
 		return nil, err
 	}
-	out := &Campaign{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeCampaign(body)
 }
 
 // Pause a running campaign.
@@ -98,9 +94,15 @@ func (r *CampaignsResource) transition(ctx context.Context, id, action string) (
 	if err != nil {
 		return nil, err
 	}
-	out := &Campaign{}
-	if err := decodeJSON(body, out); err != nil {
+	return decodeCampaign(body)
+}
+
+func decodeCampaign(body []byte) (*Campaign, error) {
+	var env struct {
+		Data Campaign `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
 		return nil, err
 	}
-	return out, nil
+	return &env.Data, nil
 }

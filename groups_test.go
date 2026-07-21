@@ -2,14 +2,15 @@ package blueticks
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"strings"
 	"testing"
 )
 
+const groupFixture = `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
+
+const groupListItemFixture = `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"restrict":null}`
+
 func TestGroupsList(t *testing.T) {
-	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/groups" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
@@ -17,13 +18,13 @@ func TestGroupsList(t *testing.T) {
 		if got := r.URL.Query().Get("limit"); got != "10" {
 			t.Errorf("limit query: %q", got)
 		}
-		jsonResponse(w, `{"data":[`+groupBody+`],"hasMore":false}`)
+		jsonResponse(w, `{"success":true,"data":[`+groupListItemFixture+`],"limit":10,"skip":0,"total":1}`)
 	})
 	got, err := c.Groups.List(context.Background(), ListGroupsParams{Limit: 10})
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
-	if len(got.Data) != 1 || got.Data[0].ID != "g_1" || got.HasMore {
+	if len(got.Data) != 1 || got.Data[0].ID != "g_1" || got.Total != 1 {
 		t.Fatalf("unexpected page: %+v", got)
 	}
 }
@@ -35,25 +36,28 @@ func TestGroupsListUnauthorized(t *testing.T) {
 }
 
 func TestGroupsCRUD(t *testing.T) {
-	groupBody := `{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
 	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		wrapped := `{"success":true,"data":` + groupFixture + `}`
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/groups/g_1":
-			jsonResponse(w, groupBody)
+			if r.URL.Query().Get("include") != "participants" {
+				t.Errorf("expected include=participants, got %q", r.URL.Query().Get("include"))
+			}
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodPatch && r.URL.Path == "/v1/groups/g_1":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups/g_1/members":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/c1@c.us":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/groups/g_1/members/c1@c.us/admin":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/c1@c.us/admin":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodPut && r.URL.Path == "/v1/groups/g_1/picture":
-			jsonResponse(w, groupBody)
+			jsonResponse(w, wrapped)
 		case r.Method == http.MethodDelete && r.URL.Path == "/v1/groups/g_1/members/me":
 			w.WriteHeader(http.StatusNoContent)
 		default:
@@ -65,7 +69,7 @@ func TestGroupsCRUD(t *testing.T) {
 	if err != nil || g.ID != "g_1" {
 		t.Fatalf("Create: %v %+v", err, g)
 	}
-	if _, err := c.Groups.Get(ctx, "g_1"); err != nil {
+	if _, err := c.Groups.Get(ctx, "g_1", GetGroupParams{Include: "participants"}); err != nil {
 		t.Fatalf("Get: %v", err)
 	}
 	if _, err := c.Groups.Update(ctx, "g_1", UpdateGroupParams{Name: "Team Renamed"}); err != nil {
@@ -91,40 +95,17 @@ func TestGroupsCRUD(t *testing.T) {
 	}
 }
 
-func TestGroupsUpdateSettingsDescription(t *testing.T) {
-	groupBody := `{"id":"g_1","name":"Team","description":"New desc","owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":2,"announce":null,"restrict":null,"participants":[]}`
-	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPatch || r.URL.Path != "/v1/groups/g_1" {
-			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
-		}
-		buf, _ := io.ReadAll(r.Body)
-		if !strings.Contains(string(buf), `"description":"New desc"`) {
-			t.Errorf("body missing description: %s", buf)
-		}
-		jsonResponse(w, groupBody)
-	})
-	desc := "New desc"
-	g, err := c.Groups.Update(context.Background(), "g_1", UpdateGroupParams{
-		Settings: &GroupSettings{Description: &desc},
-	})
-	if err != nil {
-		t.Fatalf("Update: %v", err)
-	}
-	if g.Description == nil || *g.Description != "New desc" {
-		t.Fatalf("unexpected group: %+v", g)
-	}
-}
-
-// TestGroupsDecodesEmptyTypedResponse locks in encoding/json's lenient
-// behavior — an empty `{}` decodes Group to the zero value without panicking.
 func TestGroupsDecodesEmptyTypedResponse(t *testing.T) {
 	if err := decodeJSON([]byte(`{}`), &Group{}); err != nil {
 		t.Fatalf("Group: %v", err)
+	}
+	if err := decodeJSON([]byte(`{}`), &GroupListItem{}); err != nil {
+		t.Fatalf("GroupListItem: %v", err)
 	}
 }
 
 func TestGroupsUnauthorized(t *testing.T) {
 	c, _ := newTestServer(t, unauthorizedHandler)
-	_, err := c.Groups.Get(context.Background(), "g_1")
+	_, err := c.Groups.Get(context.Background(), "g_1", GetGroupParams{})
 	expectAuthError(t, err)
 }

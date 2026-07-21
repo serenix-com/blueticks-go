@@ -12,13 +12,12 @@ type ScheduledMessagesResource struct {
 	client *Client
 }
 
-// Send message.
+// Create (schedule) a message to a chat.
 //
-// Creates (and optionally schedules) a message. Pass an IdempotencyKey on
-// the request to make this call safe to retry — the key is sent as the
-// `Idempotency-Key` header and the server short-circuits duplicate calls
-// within its replay window.
-func (r *ScheduledMessagesResource) Create(ctx context.Context, chatID string, params CreateScheduledMessageParams) (*ScheduledMessage, error) {
+// POSTs to /v1/scheduled-messages/{chatId}. Set params.SendAt to schedule for
+// later; omit for immediate queueing. Pass an IdempotencyKey on params to make
+// the call safe to retry — it is sent as the Idempotency-Key header.
+func (r *ScheduledMessagesResource) Create(ctx context.Context, chatID string, params SendMessageParams) (*SentMessage, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method:         http.MethodPost,
 		path:           "/v1/scheduled-messages/" + url.PathEscape(chatID),
@@ -28,32 +27,29 @@ func (r *ScheduledMessagesResource) Create(ctx context.Context, chatID string, p
 	if err != nil {
 		return nil, err
 	}
-	out := &ScheduledMessage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeSentMessage(body)
 }
 
-// List messages.
-//
-// Retrieves a list of all resources from the service. Cursor-paginated.
+// List scheduled messages. Offset-paginated.
 func (r *ScheduledMessagesResource) List(ctx context.Context, params ListScheduledMessagesParams) (*ScheduledMessagesPage, error) {
 	q := url.Values{}
-	if params.Limit > 0 {
-		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
-	}
 	if params.ChatID != "" {
 		q.Set("chatId", params.ChatID)
+	}
+	if params.SearchToken != "" {
+		q.Set("searchToken", params.SearchToken)
 	}
 	if params.Status != "" {
 		q.Set("status", params.Status)
 	}
-	if params.Q != "" {
-		q.Set("q", params.Q)
+	if params.Order != "" {
+		q.Set("order", params.Order)
+	}
+	if params.Skip > 0 {
+		q.Set("skip", strconv.Itoa(params.Skip))
+	}
+	if params.Limit > 0 {
+		q.Set("limit", strconv.Itoa(params.Limit))
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -70,10 +66,8 @@ func (r *ScheduledMessagesResource) List(ctx context.Context, params ListSchedul
 	return out, nil
 }
 
-// Get message.
-//
-// Retrieves a single resource with the given id from the service.
-func (r *ScheduledMessagesResource) Retrieve(ctx context.Context, id string) (*ScheduledMessage, error) {
+// Retrieve a single scheduled message by id.
+func (r *ScheduledMessagesResource) Retrieve(ctx context.Context, id string) (*SentMessage, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
 		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
@@ -81,20 +75,12 @@ func (r *ScheduledMessagesResource) Retrieve(ctx context.Context, id string) (*S
 	if err != nil {
 		return nil, err
 	}
-	out := &ScheduledMessage{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeSentMessage(body)
 }
 
-// Update message.
-//
-// Updates the resource identified by id using the supplied fields. Only the
-// fields supplied on params are sent — unset (nil) fields preserve their
-// server-side value. Rejected once the message has advanced past the
-// editable window (status not in pending/sending).
-func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, params UpdateScheduledMessageParams) (*ScheduledMessage, error) {
+// Update mutates a queued/scheduled message. Only supplied (non-nil) fields are
+// sent. Rejected once the message has advanced past the editable window.
+func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, params UpdateScheduledMessageParams) (*SentMessage, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPatch,
 		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
@@ -103,9 +89,33 @@ func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, param
 	if err != nil {
 		return nil, err
 	}
-	out := &ScheduledMessage{}
-	if err := decodeJSON(body, out); err != nil {
+	return decodeSentMessage(body)
+}
+
+// Delete cancels a scheduled message. Returns {id, deleted: true}.
+func (r *ScheduledMessagesResource) Delete(ctx context.Context, id string) (*DeletedResource, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodDelete,
+		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
+	})
+	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	var env struct {
+		Data DeletedResource `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
+}
+
+func decodeSentMessage(body []byte) (*SentMessage, error) {
+	var env struct {
+		Data SentMessage `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
 }

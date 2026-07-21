@@ -5,42 +5,6 @@ All notable changes to the Blueticks Go SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased — 2026-06-25
-
-The `/v1/newsletters` identity field was split by surface to match how the
-chats / contacts / groups list endpoints key their rows.
-
-### Changed
-
-- `Newsletter` (returned by `Newsletters.Create` and `Newsletters.Retrieve`)
-  renames its identity field `ID` (`json:"id"`) → `NewsletterID`
-  (`json:"newsletterId"`). The stale `Owner` field was dropped — it is no
-  longer in the spec.
-- `NewslettersPage.Data` is now `[]NewsletterListItem` instead of
-  `[]Newsletter`. List rows key their identity by `ChatID` (`json:"chatId"`).
-
-### Added
-
-- `NewsletterListItem` type for `Newsletters.List` rows — identical to
-  `Newsletter` except the identity field is `ChatID` (`json:"chatId"`).
-
-## v1.3.0 — 2026-06-18
-
-Webhook payload signing was dropped backend-side: deliveries are no longer
-HMAC-signed, webhook create responses no longer return a `secret`, and
-`POST /v1/webhooks/{id}/rotate-secret` was removed. The webhook resource is
-now plain CRUD (Create / List / Get / Update / Delete).
-
-### Removed
-
-- `VerifyWebhook` helper and the `WithVerifyTolerance` / `DefaultWebhookTolerance`
-  knobs (deleted `webhooks_verify.go`).
-- `Webhooks.RotateSecret` — the `/v1/webhooks/{id}/rotate-secret` endpoint no
-  longer exists.
-- `WebhookCreateResult` and `WebhookEvent` types. `Webhooks.Create` now returns
-  the plain `*Webhook` (no `Secret` field).
-- `WebhookVerificationError` type and the `ErrWebhookVerification` sentinel.
-
 ## v1.2.0 — 2026-05-22
 
 OpenAPI parity pass. The SDK now matches `backend/openapi.json`

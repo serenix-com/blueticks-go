@@ -11,13 +11,32 @@ func TestContactsList(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/contacts" {
 			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
 		}
-		jsonResponse(w, `{"data":[{"chatId":"c1@c.us","name":"Alice","isBusiness":false}],"hasMore":false}`)
+		if r.URL.Query().Get("searchToken") != "a" {
+			t.Errorf("missing searchToken param")
+		}
+		jsonResponse(w, `{"success":true,"data":[{"chatId":"c1@c.us","name":"Alice","isBusiness":false}],"limit":50,"skip":0,"total":1}`)
 	})
-	got, err := c.Contacts.List(context.Background(), ListContactsParams{Query: "a"})
+	got, err := c.Contacts.List(context.Background(), ListContactsParams{SearchToken: "a"})
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
 	if len(got.Data) != 1 || got.Data[0].ChatID != "c1@c.us" {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
+func TestContactsCommonGroups(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/contacts/c1@c.us/common_groups" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, `{"success":true,"data":[{"id":"g_1","name":"Team","description":null,"owner":null,"createdAt":null,"lastMessageAt":null,"participantCount":3,"restrict":null}],"limit":50,"skip":0,"total":1}`)
+	})
+	got, err := c.Contacts.CommonGroups(context.Background(), "c1@c.us")
+	if err != nil {
+		t.Fatalf("CommonGroups: %v", err)
+	}
+	if len(got.Data) != 1 || got.Data[0].ID != "g_1" {
 		t.Fatalf("unexpected: %+v", got)
 	}
 }

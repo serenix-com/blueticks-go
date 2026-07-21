@@ -18,8 +18,10 @@ type ListWebhooksParams struct {
 	Cursor string
 }
 
-// Create registers a new webhook subscription.
-func (r *WebhooksResource) Create(ctx context.Context, params CreateWebhookParams) (*Webhook, error) {
+// Create registers a new webhook subscription. The returned secret is
+// shown only on creation — store it securely and use VerifyWebhook to
+// validate incoming deliveries.
+func (r *WebhooksResource) Create(ctx context.Context, params CreateWebhookParams) (*WebhookCreateResult, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
 		path:   "/v1/webhooks",
@@ -28,7 +30,7 @@ func (r *WebhooksResource) Create(ctx context.Context, params CreateWebhookParam
 	if err != nil {
 		return nil, err
 	}
-	out := &Webhook{}
+	out := &WebhookCreateResult{}
 	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}
@@ -104,6 +106,23 @@ func (r *WebhooksResource) Delete(ctx context.Context, id string) (*DeletedResou
 		return nil, err
 	}
 	out := &DeletedResource{}
+	if err := decodeJSON(body, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RotateSecret invalidates the current signing secret and returns a new
+// one. Use the new secret for all subsequent VerifyWebhook calls.
+func (r *WebhooksResource) RotateSecret(ctx context.Context, id string) (*WebhookCreateResult, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/webhooks/" + url.PathEscape(id) + "/rotate-secret",
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := &WebhookCreateResult{}
 	if err := decodeJSON(body, out); err != nil {
 		return nil, err
 	}

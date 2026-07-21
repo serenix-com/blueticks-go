@@ -11,7 +11,7 @@ import (
 //
 //	c, err := blueticks.NewClient(blueticks.WithAPIKey("sk_..."))
 //	if err != nil { ... }
-//	msg, err := c.ScheduledMessages.Create(ctx, "+15555550100", blueticks.CreateScheduledMessageParams{Type: blueticks.MessageTypeText, Text: "hi"})
+//	msg, err := c.ScheduledMessages.Create(ctx, blueticks.CreateScheduledMessageParams{Type: blueticks.MessageTypeText, To: "+15555550100", Text: "hi"})
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -31,6 +31,7 @@ type Client struct {
 	Engines           *EnginesResource
 	Newsletters       *NewslettersResource
 	ScheduledMessages *ScheduledMessagesResource
+	Messages          *MessagesResource
 	Suno              *SunoResource
 }
 
@@ -113,6 +114,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Engines = &EnginesResource{client: c}
 	c.Newsletters = &NewslettersResource{client: c}
 	c.ScheduledMessages = &ScheduledMessagesResource{client: c}
+	c.Messages = &MessagesResource{client: c}
 	c.Suno = &SunoResource{client: c}
 
 	return c, nil

@@ -16,9 +16,11 @@ func (r *AccountResource) Retrieve(ctx context.Context) (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &Account{}
-	if err := decodeJSON(body, out); err != nil {
+	var env struct {
+		Data Account `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
 		return nil, err
 	}
-	return out, nil
+	return &env.Data, nil
 }

@@ -12,46 +12,28 @@ type GroupsResource struct {
 	client *Client
 }
 
-// AddMemberParams is the body for GroupsResource.AddMember.
-type AddMemberParams struct {
-	ChatID string `json:"chatId"`
-}
-
 // ListGroupsParams is the query-param bundle for GroupsResource.List.
 type ListGroupsParams struct {
-	Limit  int
-	Cursor string
-	Q      string // case-insensitive substring match against group name
-	// IncludeArchive includes archived groups (default false → excluded).
-	IncludeArchive bool
+	SearchToken    string
+	IncludeArchive *bool
+	Skip           int
+	Limit          int
 }
 
-// SetGroupPictureParams is the body for GroupsResource.SetPicture.
-//
-// FileDataURL is required and must be a `data:<mime>;base64,<data>` URL.
-type SetGroupPictureParams struct {
-	FileDataURL  string `json:"fileDataUrl"`
-	FileName     string `json:"fileName,omitempty"`
-	FileMimeType string `json:"fileMimeType,omitempty"`
-}
-
-// List the groups the connected WhatsApp engine sees.
-//
-// Supports cursor pagination (Limit + Cursor) and an optional case-insensitive
-// substring search on the group name via Q.
+// List the groups the connected WhatsApp engine sees. Offset-paginated.
 func (r *GroupsResource) List(ctx context.Context, params ListGroupsParams) (*GroupsPage, error) {
 	q := url.Values{}
+	if params.SearchToken != "" {
+		q.Set("searchToken", params.SearchToken)
+	}
+	if params.IncludeArchive != nil {
+		q.Set("includeArchive", strconv.FormatBool(*params.IncludeArchive))
+	}
+	if params.Skip > 0 {
+		q.Set("skip", strconv.Itoa(params.Skip))
+	}
 	if params.Limit > 0 {
 		q.Set("limit", strconv.Itoa(params.Limit))
-	}
-	if params.Cursor != "" {
-		q.Set("cursor", params.Cursor)
-	}
-	if params.Q != "" {
-		q.Set("q", params.Q)
-	}
-	if params.IncludeArchive {
-		q.Set("includeArchive", "true")
 	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
@@ -78,31 +60,28 @@ func (r *GroupsResource) Create(ctx context.Context, params CreateGroupParams) (
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// Get retrieves a group by id.
-func (r *GroupsResource) Get(ctx context.Context, groupID string) (*Group, error) {
+// Get retrieves a group by id. Set params.Include="participants" to inline the
+// members array.
+func (r *GroupsResource) Get(ctx context.Context, groupID string, params GetGroupParams) (*Group, error) {
+	q := url.Values{}
+	if params.Include != "" {
+		q.Set("include", params.Include)
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodGet,
 		path:   "/v1/groups/" + url.PathEscape(groupID),
+		query:  q,
 	})
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// Update mutates a group's name and/or settings. Settings is a map of
-// flags (announce, restrict, …).
+// Update mutates a group's name and/or settings.
 func (r *GroupsResource) Update(ctx context.Context, groupID string, params UpdateGroupParams) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPatch,
@@ -112,15 +91,10 @@ func (r *GroupsResource) Update(ctx context.Context, groupID string, params Upda
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// AddMember adds a participant to the group by chatId (JID) or phone number in international format (e.g. +14155551234).
-// Returns the updated group.
+// AddMember adds one or more participants to the group. Returns the updated group.
 func (r *GroupsResource) AddMember(ctx context.Context, groupID string, params AddMemberParams) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
@@ -130,15 +104,10 @@ func (r *GroupsResource) AddMember(ctx context.Context, groupID string, params A
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// RemoveMember removes a participant from the group. Returns the updated
-// group.
+// RemoveMember removes a participant from the group. Returns the updated group.
 func (r *GroupsResource) RemoveMember(ctx context.Context, groupID, chatID string) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
@@ -147,15 +116,10 @@ func (r *GroupsResource) RemoveMember(ctx context.Context, groupID, chatID strin
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// PromoteAdmin grants admin privileges to a group member. Returns the
-// updated group.
+// PromoteAdmin grants admin privileges to a group member. Returns the updated group.
 func (r *GroupsResource) PromoteAdmin(ctx context.Context, groupID, chatID string) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
@@ -164,15 +128,10 @@ func (r *GroupsResource) PromoteAdmin(ctx context.Context, groupID, chatID strin
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// DemoteAdmin revokes admin privileges from a group member. Returns the
-// updated group.
+// DemoteAdmin revokes admin privileges from a group member. Returns the updated group.
 func (r *GroupsResource) DemoteAdmin(ctx context.Context, groupID, chatID string) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
@@ -181,15 +140,10 @@ func (r *GroupsResource) DemoteAdmin(ctx context.Context, groupID, chatID string
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// SetPicture replaces the group picture. FileDataURL must be a base64 data
-// URL (PNG/JPEG, ≤20 MiB). Returns the updated group.
+// SetPicture replaces the group picture. Returns the updated group.
 func (r *GroupsResource) SetPicture(ctx context.Context, groupID string, params SetGroupPictureParams) (*Group, error) {
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPut,
@@ -199,20 +153,25 @@ func (r *GroupsResource) SetPicture(ctx context.Context, groupID string, params 
 	if err != nil {
 		return nil, err
 	}
-	out := &Group{}
-	if err := decodeJSON(body, out); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return decodeGroup(body)
 }
 
-// Leave removes the authenticated identity from the group. Idempotent —
-// succeeds even if already not a member. The endpoint returns 204 with no
-// body.
+// Leave removes the connected identity from the group. Idempotent — the
+// endpoint returns 204 with no body.
 func (r *GroupsResource) Leave(ctx context.Context, groupID string) error {
 	_, err := r.client.do(ctx, requestOptions{
 		method: http.MethodDelete,
 		path:   "/v1/groups/" + url.PathEscape(groupID) + "/members/me",
 	})
 	return err
+}
+
+func decodeGroup(body []byte) (*Group, error) {
+	var env struct {
+		Data Group `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
 }
