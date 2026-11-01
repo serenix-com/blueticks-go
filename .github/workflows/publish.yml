@@ -23,7 +23,7 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: arc-runners-org
     permissions:
       contents: write  # for the GitHub Release step
     steps:
