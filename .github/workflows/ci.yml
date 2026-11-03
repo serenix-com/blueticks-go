@@ -1,0 +1,15 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  ci:
+    name: ci
+    runs-on: arc-runners-org
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: go vet (if go exists)
+        run: |
+          if command -v go >/dev/null 2>&1; then go vet ./...; else echo "go not on runner, skipping"; fi
