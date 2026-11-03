@@ -97,3 +97,22 @@ func TestSunoUnauthorized(t *testing.T) {
 	_, err := c.Suno.Account(context.Background())
 	expectAuthError(t, err)
 }
+
+func TestSunoGenerateInstrumentalOmitsLyrics(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		var body map[string]any
+		_ = json.Unmarshal(raw, &body)
+		if _, ok := body["lyrics"]; ok {
+			t.Errorf("lyrics should be omitted when empty: %s", raw)
+		}
+		if body["instrumental"] != true || body["style"] != "lofi" {
+			t.Errorf("unexpected body: %s", raw)
+		}
+		jsonResponse(w, `{"success":true,"data":{"jobId":"job_2","clips":[]}}`)
+	})
+	inst := true
+	if _, err := c.Suno.GenerateSong(context.Background(), GenerateSongParams{Style: "lofi", Instrumental: &inst}); err != nil {
+		t.Fatalf("GenerateSong: %v", err)
+	}
+}

@@ -37,6 +37,21 @@ func (r *MessagesResource) List(ctx context.Context, params ListMessagesParams) 
 	if len(params.MessageTypes) > 0 {
 		q.Set("messageTypes", strings.Join(params.MessageTypes, ","))
 	}
+	for _, term := range params.QueryAny {
+		q.Add("queryAny", term)
+	}
+	if params.Mime != "" {
+		q.Set("mime", params.Mime)
+	}
+	if params.FilenameContains != "" {
+		q.Set("filenameContains", params.FilenameContains)
+	}
+	if params.HasMedia != nil {
+		q.Set("hasMedia", strconv.FormatBool(*params.HasMedia))
+	}
+	if params.Sender != "" {
+		q.Set("sender", params.Sender)
+	}
 	if params.LoadFromPhoneIfNeeded != nil {
 		q.Set("loadFromPhoneIfNeeded", strconv.FormatBool(*params.LoadFromPhoneIfNeeded))
 	}
@@ -149,10 +164,25 @@ func (r *MessagesResource) BatchAcks(ctx context.Context, params BatchMessageAck
 
 // LoadOlder asks the engine to pull older history from the connected phone for a
 // chat that isn't fully synced yet.
+//
+// To pull several pages in one call or stop at a target depth, use
+// LoadOlderWithParams.
 func (r *MessagesResource) LoadOlder(ctx context.Context, chatID string) (*LoadOlderResult, error) {
+	return r.LoadOlderWithParams(ctx, chatID, LoadOlderParams{})
+}
+
+// LoadOlderWithParams is LoadOlder with the optional Pages (1-10, WA-paced
+// ~2.5s apart) and UntilDate controls. The result reports how many pages ran
+// (PagesExecuted) and how far back the chat is now loaded (Coverage).
+func (r *MessagesResource) LoadOlderWithParams(ctx context.Context, chatID string, params LoadOlderParams) (*LoadOlderResult, error) {
+	var reqBody interface{}
+	if params.Pages != nil || params.UntilDate != nil {
+		reqBody = params
+	}
 	body, err := r.client.do(ctx, requestOptions{
 		method: http.MethodPost,
 		path:   "/v1/messages/load_older/" + url.PathEscape(chatID),
+		body:   reqBody,
 	})
 	if err != nil {
 		return nil, err
