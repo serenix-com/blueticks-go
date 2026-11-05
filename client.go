@@ -33,6 +33,10 @@ type Client struct {
 	ScheduledMessages *ScheduledMessagesResource
 	Messages          *MessagesResource
 	Suno              *SunoResource
+	Boards            *BoardsResource
+	Identity          *IdentityResource
+	LatestChats       *LatestChatsResource
+	Realtime          *RealtimeResource
 }
 
 // Option configures a Client at construction time.
@@ -116,6 +120,10 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.ScheduledMessages = &ScheduledMessagesResource{client: c}
 	c.Messages = &MessagesResource{client: c}
 	c.Suno = &SunoResource{client: c}
+	c.Boards = &BoardsResource{client: c}
+	c.Identity = &IdentityResource{client: c}
+	c.LatestChats = &LatestChatsResource{client: c}
+	c.Realtime = &RealtimeResource{client: c}
 
 	return c, nil
 }

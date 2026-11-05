@@ -122,3 +122,41 @@ func TestScheduledMessagesCreateUnauthorized(t *testing.T) {
 	_, err := c.ScheduledMessages.Create(context.Background(), "c1@c.us", SendMessageParams{Type: MessageTypeText, Text: "hi"})
 	expectAuthError(t, err)
 }
+
+func TestScheduledMessagesCreateMentionsAndRecipientName(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		var body map[string]any
+		_ = json.Unmarshal(raw, &body)
+		m, _ := body["mentions"].([]any)
+		if len(m) != 1 || m[0] != "12025550101@c.us" || body["recipientName"] != "Team" {
+			t.Errorf("unexpected body: %s", raw)
+		}
+		w.WriteHeader(http.StatusCreated)
+		jsonResponse(w, `{"success":true,"data":{"id":"m1","to":"g1@g.us","type":"text","status":"pending","createdAt":"2026-01-01T00:00:00Z"}}`)
+	})
+	_, err := c.ScheduledMessages.Create(context.Background(), "g1@g.us", SendMessageParams{
+		Type: MessageTypeText, Text: "hi @Jon", Mentions: []string{"12025550101@c.us"}, RecipientName: "Team",
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+}
+
+func TestScheduledMessagesUpdateMentions(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch || r.URL.Path != "/v1/scheduled-messages/m1" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		raw, _ := io.ReadAll(r.Body)
+		var body map[string]any
+		_ = json.Unmarshal(raw, &body)
+		if m, _ := body["mentions"].([]any); len(m) != 1 {
+			t.Errorf("unexpected body: %s", raw)
+		}
+		jsonResponse(w, `{"success":true,"data":{"id":"m1","to":"g1@g.us","type":"text","status":"pending","createdAt":"2026-01-01T00:00:00Z"}}`)
+	})
+	if _, err := c.ScheduledMessages.Update(context.Background(), "m1", UpdateScheduledMessageParams{Mentions: []string{"12025550101@c.us"}}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+}

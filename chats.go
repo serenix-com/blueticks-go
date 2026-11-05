@@ -15,8 +15,13 @@ type ChatsResource struct {
 
 // ListChatsParams is the query-param bundle for ChatsResource.List.
 type ListChatsParams struct {
-	SearchToken         string
-	Filter              string // "groups" | "contacts" | "newsletters"
+	SearchToken string
+	Filter      string // "groups" | "contacts" | "newsletters"
+	// Kinds keeps only these chat kinds ("contact" | "group" | "newsletter");
+	// sent as repeated kinds params.
+	Kinds []string
+	// Since keeps only chats whose last message is at/after this ISO 8601 instant.
+	Since               string
 	IncludeLastMessage  *bool
 	IncludeExtendedInfo *bool
 	IncludeWithoutName  *bool
@@ -40,6 +45,12 @@ func (r *ChatsResource) List(ctx context.Context, params ListChatsParams) (*Chat
 	}
 	if params.Filter != "" {
 		q.Set("filter", params.Filter)
+	}
+	for _, k := range params.Kinds {
+		q.Add("kinds", k)
+	}
+	if params.Since != "" {
+		q.Set("since", params.Since)
 	}
 	if params.IncludeLastMessage != nil {
 		q.Set("includeLastMessage", strconv.FormatBool(*params.IncludeLastMessage))

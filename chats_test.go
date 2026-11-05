@@ -98,3 +98,19 @@ func TestChatsUnauthorized(t *testing.T) {
 	_, err := c.Chats.List(context.Background(), ListChatsParams{})
 	expectAuthError(t, err)
 }
+
+func TestChatsListKindsAndSince(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		if got := q["kinds"]; len(got) != 2 || got[0] != "group" || got[1] != "newsletter" {
+			t.Errorf("expected repeated kinds, got %v", got)
+		}
+		if q.Get("since") != "2026-01-01T00:00:00+02:00" {
+			t.Errorf("unexpected since: %q", q.Get("since"))
+		}
+		jsonResponse(w, `{"success":true,"data":[],"limit":50,"skip":0,"total":0}`)
+	})
+	if _, err := c.Chats.List(context.Background(), ListChatsParams{Kinds: []string{"group", "newsletter"}, Since: "2026-01-01T00:00:00+02:00"}); err != nil {
+		t.Fatalf("List: %v", err)
+	}
+}

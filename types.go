@@ -92,6 +92,9 @@ type MessagesPage struct {
 	Skip    int       `json:"skip"`
 	Total   int       `json:"total"`
 	HasMore bool      `json:"hasMore,omitempty"`
+	// Coverage reports how far back this page reaches (oldest message in the
+	// returned page). Nil when the page has no dated message.
+	Coverage *LoadCoverage `json:"coverage,omitempty"`
 }
 
 // PinnedMessagesPage is the offset-paginated response from MessagesResource.ListPinned.
@@ -130,6 +133,22 @@ type WebhooksPage struct {
 	Data       []Webhook `json:"data"`
 	HasMore    bool      `json:"has_more"`
 	NextCursor *string   `json:"next_cursor,omitempty"`
+}
+
+// BoardsPage is the offset-paginated response from BoardsResource.List.
+type BoardsPage struct {
+	Data  []Board `json:"data"`
+	Limit int     `json:"limit"`
+	Skip  int     `json:"skip"`
+	Total int     `json:"total"`
+}
+
+// BoardItemsPage is the offset-paginated response from BoardsResource.ListItems.
+type BoardItemsPage struct {
+	Data  []BoardItem `json:"data"`
+	Limit int         `json:"limit"`
+	Skip  int         `json:"skip"`
+	Total int         `json:"total"`
 }
 
 // --- Ping --------------------------------------------------------------------
@@ -199,6 +218,10 @@ type AppendContactsResult struct {
 }
 
 // ContactInput is the contact shape accepted on audience create / append.
+//
+// To is a phone number (+E164) or a WhatsApp JID: individual (...@c.us), group
+// (...@g.us) or newsletter (...@newsletter). Individual recipients are stored in
+// international format; group/newsletter ids are stored verbatim.
 //
 // Variables are per-contact substitution values usable as {key} tokens in a
 // campaign text.
@@ -542,6 +565,11 @@ type Message struct {
 	Filename      *string             `json:"filename,omitempty"`
 	LinkPreview   *MessageLinkPreview `json:"linkPreview,omitempty"`
 	QuotedMessage *QuotedMessage      `json:"quotedMessage,omitempty"`
+	// Source is where the message was read from ("vault" or "backup").
+	Source *string `json:"source,omitempty"`
+	// Secret is the correlation token the sender attached at send time. Present
+	// only on messages sent through this API.
+	Secret *string `json:"secret,omitempty"`
 }
 
 // SentMessage is the queued/scheduled/sent message record returned by
@@ -614,13 +642,39 @@ type Media struct {
 	MediaUnavailable *string `json:"mediaUnavailable,omitempty"`
 }
 
+// LoadCoverage reports how far back a chat's history is loaded.
+type LoadCoverage struct {
+	// OldestLoadedTimestamp is epoch MILLISECONDS of the oldest loaded message;
+	// nil when unknown.
+	OldestLoadedTimestamp *float64 `json:"oldestLoadedTimestamp,omitempty"`
+	// OldestLoadedIso is the ISO 8601 form of OldestLoadedTimestamp.
+	OldestLoadedIso *string `json:"oldestLoadedIso,omitempty"`
+}
+
 // LoadOlderResult is the response from POST /v1/messages/load_older/{chatId}.
+//
+// Added is the sum across the pages executed; CanLoadMore comes from the last
+// page; PagesExecuted may be lower than requested when the loop stopped early
+// (exhaustion, error, or reaching UntilDate). Coverage tells you how far back
+// the chat is now loaded.
 type LoadOlderResult struct {
-	TotalMessages      *int    `json:"totalMessages"`
-	Added              *int    `json:"added"`
-	CanLoadMore        bool    `json:"canLoadMore"`
-	HistoryUnavailable bool    `json:"historyUnavailable"`
-	Error              *string `json:"error"`
+	TotalMessages      *int         `json:"totalMessages"`
+	Added              *int         `json:"added"`
+	CanLoadMore        bool         `json:"canLoadMore"`
+	HistoryUnavailable bool         `json:"historyUnavailable"`
+	Error              *string      `json:"error"`
+	PagesExecuted      int          `json:"pagesExecuted"`
+	Coverage           LoadCoverage `json:"coverage"`
+}
+
+// LoadOlderParams is the optional body for MessagesResource.LoadOlderWithParams.
+type LoadOlderParams struct {
+	// Pages is how many older pages to pull in one call (1-10, default 1).
+	Pages *int `json:"pages,omitempty"`
+	// UntilDate stops once the oldest loaded message is at/before this date. The
+	// API accepts an ISO 8601 string or a numeric epoch (seconds or ms); pass
+	// either a string or a number. Nil omits it.
+	UntilDate interface{} `json:"until_date,omitempty"`
 }
 
 // SendInChatParams is the body for MessagesResource.Send
@@ -641,9 +695,12 @@ type SendInChatParams struct {
 	PollQuestion      string   `json:"pollQuestion,omitempty"`
 	PollOptions       []string `json:"pollOptions,omitempty"`
 	PollAllowMultiple *bool    `json:"pollAllowMultiple,omitempty"`
-	Secret            string   `json:"secret,omitempty"`
-	WithTyping        *bool    `json:"withTyping,omitempty"`
-	TypingSeconds     *float64 `json:"typingSeconds,omitempty"`
+	// Mentions are participant JIDs to @mention in a group; put the visible
+	// @name in Text yourself.
+	Mentions      []string `json:"mentions,omitempty"`
+	Secret        string   `json:"secret,omitempty"`
+	WithTyping    *bool    `json:"withTyping,omitempty"`
+	TypingSeconds *float64 `json:"typingSeconds,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -692,12 +749,23 @@ type BatchMessageAcksParams struct {
 // ListMessagesParams is the query-param bundle for MessagesResource.List.
 // MessageTypes is sent as a single comma-separated value.
 type ListMessagesParams struct {
-	ChatID                string
-	SearchToken           string
-	Order                 string // "asc" or "desc"
-	Since                 string
-	Until                 string
-	MessageTypes          []string
+	ChatID       string
+	SearchToken  string
+	Order        string // "asc" or "desc"
+	Since        string
+	Until        string
+	MessageTypes []string
+	// QueryAny is a keyword-set OR search (up to 24 terms): a message matches if
+	// its body/caption/filename contains ANY term. Sent as repeated queryAny params.
+	QueryAny []string
+	// Mime filters by MIME prefix, e.g. "application/pdf" or "image/".
+	Mime string
+	// FilenameContains is a case-insensitive substring match on the document filename.
+	FilenameContains string
+	// HasMedia: true = only messages with a media attachment; false = only non-media.
+	HasMedia *bool
+	// Sender is a case-insensitive substring match on the sender JID/phone.
+	Sender                string
 	LoadFromPhoneIfNeeded *bool
 	IncludeMediaContent   *bool
 	Skip                  int
@@ -721,8 +789,14 @@ type SendMessageParams struct {
 	PollQuestion      string   `json:"pollQuestion,omitempty"`
 	PollOptions       []string `json:"pollOptions,omitempty"`
 	PollAllowMultiple *bool    `json:"pollAllowMultiple,omitempty"`
-	Secret            string   `json:"secret,omitempty"`
-	SendAt            string   `json:"sendAt,omitempty"`
+	// Mentions are participant JIDs to @mention in a group; put the visible
+	// @name in Text yourself.
+	Mentions []string `json:"mentions,omitempty"`
+	Secret   string   `json:"secret,omitempty"`
+	SendAt   string   `json:"sendAt,omitempty"`
+	// RecipientName is an optional display name shown next to the message in the
+	// scheduled-message list; resolved automatically when omitted.
+	RecipientName string `json:"recipientName,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -743,6 +817,8 @@ type UpdateScheduledMessageParams struct {
 	PollQuestion      *string  `json:"pollQuestion,omitempty"`
 	PollAllowMultiple *bool    `json:"pollAllowMultiple,omitempty"`
 	PollOptions       []string `json:"pollOptions,omitempty"`
+	// Mentions are participant JIDs to @mention in a group.
+	Mentions []string `json:"mentions,omitempty"`
 }
 
 // ListScheduledMessagesParams is the query-param bundle for
@@ -857,10 +933,11 @@ type CreateUploadResult struct {
 	Status   string `json:"status"`
 }
 
-// GenerateSongParams is the body for SunoResource.GenerateSong. Lyrics and Style
-// are required; the rest are optional tuning knobs.
+// GenerateSongParams is the body for SunoResource.GenerateSong. Style is
+// required. Lyrics is required unless Instrumental is true, in which case it is
+// ignored and may be omitted; the rest are optional tuning knobs.
 type GenerateSongParams struct {
-	Lyrics         string   `json:"lyrics"`
+	Lyrics         string   `json:"lyrics,omitempty"`
 	Style          string   `json:"style"`
 	NegativeStyle  string   `json:"negativeStyle,omitempty"`
 	VocalGender    string   `json:"vocalGender,omitempty"` // "m" or "f"
@@ -880,6 +957,257 @@ type CreateUploadParams struct {
 	AudioURL    string `json:"audioUrl,omitempty"`
 	AudioBase64 string `json:"audioBase64,omitempty"`
 	FileName    string `json:"fileName,omitempty"`
+}
+
+// --- Boards ------------------------------------------------------------------
+
+// BoardOption is a status/priority option (label + background color).
+type BoardOption struct {
+	Label   string `json:"label"`
+	Bgcolor string `json:"bgcolor"`
+}
+
+// BoardColumn is a board column with its options.
+type BoardColumn struct {
+	ColumnID string        `json:"column_id"`
+	Title    string        `json:"title"`
+	Type     string        `json:"type"`
+	Options  []BoardOption `json:"options"`
+}
+
+// Board is an agent-memory board as returned by BoardsResource.List.
+type Board struct {
+	BoardID             string  `json:"board_id"`
+	Name                string  `json:"name"`
+	Domain              *string `json:"domain,omitempty"`
+	AgentManaged        bool    `json:"agent_managed"`
+	MemoryRetentionDays *int    `json:"memory_retention_days,omitempty"`
+	ItemCount           *int    `json:"item_count,omitempty"`
+	WebURL              string  `json:"web_url"`
+	CreatedAt           string  `json:"created_at"`
+	UpdatedAt           string  `json:"updated_at"`
+}
+
+// BoardDetail is a Board plus its columns (BoardsResource.Get / Create).
+type BoardDetail struct {
+	Board
+	Columns []BoardColumn `json:"columns"`
+}
+
+// BoardRef is the short board reference embedded in BulkBoardItemsResult.
+type BoardRef struct {
+	BoardID string  `json:"board_id"`
+	Name    string  `json:"name"`
+	Domain  *string `json:"domain,omitempty"`
+	WebURL  string  `json:"web_url"`
+}
+
+// BoardItemSource is the provenance of a board item (the originating chat/message).
+type BoardItemSource struct {
+	ChatID      string `json:"chat_id,omitempty"`
+	ChatName    string `json:"chat_name,omitempty"`
+	MessageKey  string `json:"message_key,omitempty"`
+	Excerpt     string `json:"excerpt,omitempty"`
+	ExtractedAt *int64 `json:"extracted_at,omitempty"`
+}
+
+// BoardItem is a single item (task) on a board. Status and Priority are
+// resolved option objects.
+type BoardItem struct {
+	ItemID     string                 `json:"item_id"`
+	Text       string                 `json:"text"`
+	Status     *BoardOption           `json:"status,omitempty"`
+	Priority   *BoardOption           `json:"priority,omitempty"`
+	DueDate    *string                `json:"due_date,omitempty"`
+	Cells      map[string]interface{} `json:"cells,omitempty"`
+	Source     *BoardItemSource       `json:"source,omitempty"`
+	Confidence *float64               `json:"confidence,omitempty"`
+	LastSeenAt *int64                 `json:"last_seen_at,omitempty"`
+	WebURL     string                 `json:"web_url"`
+	CreatedAt  string                 `json:"created_at"`
+	UpdatedAt  string                 `json:"updated_at"`
+}
+
+// ListBoardsParams is the query-param bundle for BoardsResource.List.
+type ListBoardsParams struct {
+	Order string // "asc" or "desc" (default "desc")
+	Skip  int
+	Limit int // 1-200
+}
+
+// CreateBoardParams is the body for BoardsResource.Create (find-or-create).
+// Pass Domain for a built-in board ("tasks", "leads", "invoices") or EntityKind
+// to open a NEW dynamic board — Description is then required.
+type CreateBoardParams struct {
+	Domain              string `json:"domain,omitempty"`
+	EntityKind          string `json:"entity_kind,omitempty"`
+	Name                string `json:"name,omitempty"`
+	Description         string `json:"description,omitempty"`
+	AgentID             string `json:"agent_id,omitempty"`
+	MemoryRetentionDays *int   `json:"memory_retention_days,omitempty"`
+}
+
+// ListBoardItemsParams is the query-param bundle for BoardsResource.ListItems.
+type ListBoardItemsParams struct {
+	Status       string
+	Order        string // "asc" or "desc"
+	ActiveOnly   *bool
+	UpdatedSince string
+	Skip         int
+	Limit        int // 1-200
+}
+
+// CreateBoardItemParams is the body for BoardsResource.CreateItem and one
+// element of BulkBoardItemsParams.Items. Status/Priority are LABELS resolved to
+// the board's options server-side.
+type CreateBoardItemParams struct {
+	Text           string                 `json:"text"`
+	Status         string                 `json:"status,omitempty"`
+	Priority       string                 `json:"priority,omitempty"`
+	DueDate        string                 `json:"due_date,omitempty"`
+	Cells          map[string]interface{} `json:"cells,omitempty"`
+	Source         *BoardItemSource       `json:"source,omitempty"`
+	Confidence     *float64               `json:"confidence,omitempty"`
+	AllowDuplicate *bool                  `json:"allow_duplicate,omitempty"`
+}
+
+// BulkBoardItemsParams is the body for BoardsResource.BulkUpsertItems (1-500 items).
+type BulkBoardItemsParams struct {
+	Items []CreateBoardItemParams `json:"items"`
+	Mode  string                  `json:"mode,omitempty"` // "upsert" (default)
+}
+
+// BulkBoardItemsResult is the response from BoardsResource.BulkUpsertItems.
+type BulkBoardItemsResult struct {
+	Created   []BoardItem `json:"created"`
+	Updated   []BoardItem `json:"updated"`
+	Unchanged int         `json:"unchanged"`
+	Board     BoardRef    `json:"board"`
+}
+
+// FindSimilarCandidate is one candidate text for BoardsResource.FindSimilarItems.
+type FindSimilarCandidate struct {
+	Text string `json:"text"`
+}
+
+// FindSimilarBoardItemsParams is the body for BoardsResource.FindSimilarItems (1-500 candidates).
+type FindSimilarBoardItemsParams struct {
+	Candidates []FindSimilarCandidate `json:"candidates"`
+}
+
+// BoardItemMatch pairs a candidate (by index) with an existing board item.
+type BoardItemMatch struct {
+	CandidateIndex int     `json:"candidate_index"`
+	ItemID         string  `json:"item_id"`
+	Text           string  `json:"text"`
+	Score          float64 `json:"score"`
+}
+
+// FindSimilarBoardItemsResult is the response from BoardsResource.FindSimilarItems.
+// Misses lists the indexes of candidates with no match.
+type FindSimilarBoardItemsResult struct {
+	Matches []BoardItemMatch `json:"matches"`
+	Misses  []int            `json:"misses"`
+}
+
+// UpdateBoardItemParams is the body for BoardsResource.UpdateItem. All fields
+// are optional; pointers distinguish "leave unchanged" (nil) from an explicit
+// value. Deleted=true soft-deletes, false restores; Note is recorded in history.
+type UpdateBoardItemParams struct {
+	Text       *string                `json:"text,omitempty"`
+	Status     *string                `json:"status,omitempty"`
+	Priority   *string                `json:"priority,omitempty"`
+	DueDate    *string                `json:"due_date,omitempty"`
+	Cells      map[string]interface{} `json:"cells,omitempty"`
+	Source     *BoardItemSource       `json:"source,omitempty"`
+	Confidence *float64               `json:"confidence,omitempty"`
+	Deleted    *bool                  `json:"deleted,omitempty"`
+	Note       *string                `json:"note,omitempty"`
+}
+
+// --- Identity ----------------------------------------------------------------
+
+// Documented values for Identity.Type. The wire type is `string`.
+const (
+	IdentityTypeUser    = "user"
+	IdentityTypeGroup   = "group"
+	IdentityTypeUnknown = "unknown"
+)
+
+// Documented values for Identity.Source. The wire type is `string`.
+const (
+	IdentitySourceEngine  = "engine"
+	IdentitySourceCache   = "cache"
+	IdentitySourceUnknown = "unknown"
+)
+
+// Identity is a WhatsApp JID resolved to its canonical phone-form identity. An
+// unknown identity comes back with Resolved=false (never a 404).
+type Identity struct {
+	Input     string   `json:"input"`
+	Resolved  bool     `json:"resolved"`
+	Canonical *string  `json:"canonical,omitempty"`
+	Phone     *string  `json:"phone,omitempty"`
+	Lid       *string  `json:"lid,omitempty"`
+	Aliases   []string `json:"aliases"`
+	Type      string   `json:"type"`
+	Source    string   `json:"source"`
+}
+
+// ResolveIdentitiesResult is the response from IdentityResource.Resolve
+// (order-preserving).
+type ResolveIdentitiesResult struct {
+	Data []Identity `json:"data"`
+}
+
+// --- Latest chats ------------------------------------------------------------
+
+// LatestChat is a chat together with its latest messages (newest first).
+type LatestChat struct {
+	ChatID            string    `json:"chatId"`
+	Name              *string   `json:"name,omitempty"`
+	ChatType          string    `json:"chatType"`
+	Pinned            *bool     `json:"pinned,omitempty"`
+	Archived          *bool     `json:"archived,omitempty"`
+	LastMessageAt     *string   `json:"lastMessageAt,omitempty"`
+	UnreadCount       *int      `json:"unreadCount,omitempty"`
+	MarkedUnread      bool      `json:"markedUnread"`
+	LastMessageText   *string   `json:"lastMessageText,omitempty"`
+	LastMessageFromMe *bool     `json:"lastMessageFromMe,omitempty"`
+	Messages          []Message `json:"messages"`
+}
+
+// LatestChatsResult is the response from LatestChatsResource.List.
+type LatestChatsResult struct {
+	Chats            []LatestChat `json:"chats"`
+	TotalChats       int          `json:"totalChats"`
+	NumberOfChats    int          `json:"numberOfChats"`
+	NumberOfMessages int          `json:"numberOfMessages"`
+}
+
+// LatestChatsParams is the query-param bundle for LatestChatsResource.List.
+// Pointers so an explicit 0 (NumberOfMessages=0 is valid) is distinguishable
+// from "use the server default".
+type LatestChatsParams struct {
+	NumberOfChats    *int // 1-200, default 50
+	NumberOfMessages *int // 0-100, default 20
+}
+
+// --- Realtime ----------------------------------------------------------------
+
+// RealtimeTokenTopics lists the MQTT topics the credential may subscribe to.
+type RealtimeTokenTopics struct {
+	Messages string `json:"messages"`
+}
+
+// RealtimeToken is the MQTT credential returned by RealtimeResource.Token.
+type RealtimeToken struct {
+	BrokerURL        string              `json:"brokerUrl"`
+	Username         string              `json:"username"`
+	Password         string              `json:"password"`
+	ExpiresAt        string              `json:"expiresAt"`
+	ExpiresInSeconds int                 `json:"expiresInSeconds"`
+	Topics           RealtimeTokenTopics `json:"topics"`
 }
 
 // --- Delete envelopes --------------------------------------------------------

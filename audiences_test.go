@@ -2,6 +2,8 @@ package blueticks
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -110,3 +112,21 @@ func TestAudienceDecodeEmptyResponse(t *testing.T) {
 }
 
 func strptr(s string) *string { return &s }
+
+func TestAudiencesCreateGroupAndNewsletterRecipients(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		var body struct {
+			Contacts []ContactInput `json:"contacts"`
+		}
+		_ = json.Unmarshal(raw, &body)
+		if len(body.Contacts) != 2 || body.Contacts[0].To != "120363@g.us" || body.Contacts[1].To != "999@newsletter" {
+			t.Errorf("unexpected body: %s", raw)
+		}
+		jsonResponse(w, `{"success":true,"data":{"id":"a1","name":"A","contactCount":2,"createdAt":"2026-01-01T00:00:00Z"}}`)
+	})
+	_, err := c.Audiences.Create(context.Background(), CreateAudienceParams{Name: "A", Contacts: []ContactInput{{To: "120363@g.us"}, {To: "999@newsletter"}}})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+}
