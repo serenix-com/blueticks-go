@@ -109,3 +109,56 @@ func TestGroupsUnauthorized(t *testing.T) {
 	_, err := c.Groups.Get(context.Background(), "g_1", GetGroupParams{})
 	expectAuthError(t, err)
 }
+
+func TestGroupsGetPicture(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/groups/g_1/picture" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, `{"success":true,"data":{"url":"https://pps.whatsapp.net/p.jpg"}}`)
+	})
+	got, err := c.Groups.GetPicture(context.Background(), "g_1")
+	if err != nil {
+		t.Fatalf("GetPicture: %v", err)
+	}
+	if got.URL == nil || *got.URL != "https://pps.whatsapp.net/p.jpg" {
+		t.Fatalf("unexpected picture: %+v", got)
+	}
+}
+
+func TestGroupsGetPictureNull(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, `{"success":true,"data":{"url":null}}`)
+	})
+	got, err := c.Groups.GetPicture(context.Background(), "g_1")
+	if err != nil {
+		t.Fatalf("GetPicture: %v", err)
+	}
+	if got.URL != nil {
+		t.Fatalf("expected nil URL, got %q", *got.URL)
+	}
+}
+
+func TestGroupsRemovePicture(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete || r.URL.Path != "/v1/groups/g_1/picture" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, `{"success":true,"data":{"ok":true}}`)
+	})
+	got, err := c.Groups.RemovePicture(context.Background(), "g_1")
+	if err != nil {
+		t.Fatalf("RemovePicture: %v", err)
+	}
+	if !got.OK {
+		t.Fatalf("unexpected result: %+v", got)
+	}
+}
+
+func TestGroupsPictureUnauthorized(t *testing.T) {
+	c, _ := newTestServer(t, unauthorizedHandler)
+	_, err := c.Groups.GetPicture(context.Background(), "g_1")
+	expectAuthError(t, err)
+	_, err = c.Groups.RemovePicture(context.Background(), "g_1")
+	expectAuthError(t, err)
+}
