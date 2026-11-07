@@ -468,6 +468,17 @@ type SetGroupPictureParams struct {
 	FileMimeType string `json:"fileMimeType,omitempty"`
 }
 
+// GroupPicture is the response from GroupsResource.GetPicture. URL is nil when
+// the group has no picture.
+type GroupPicture struct {
+	URL *string `json:"url,omitempty"`
+}
+
+// GroupPictureRemoved is the response from GroupsResource.RemovePicture.
+type GroupPictureRemoved struct {
+	OK bool `json:"ok"`
+}
+
 // GetGroupParams are the optional query params for GroupsResource.Get. Set
 // Include="participants" to inline the members array.
 type GetGroupParams struct {

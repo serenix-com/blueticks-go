@@ -156,6 +156,47 @@ func (r *GroupsResource) SetPicture(ctx context.Context, groupID string, params 
 	return decodeGroup(body)
 }
 
+// GetPicture returns the current group picture as a short-lived WhatsApp CDN
+// URL. The result's URL is nil when the group has no picture. Requires
+// groups:read.
+func (r *GroupsResource) GetPicture(ctx context.Context, groupID string) (*GroupPicture, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodGet,
+		path:   "/v1/groups/" + url.PathEscape(groupID) + "/picture",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var env struct {
+		Data GroupPicture `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
+}
+
+// RemovePicture removes the group picture. Gateway (Baileys) engine only: a
+// Chrome-extension-only account gets 501 unsupported_command. Only group admins
+// can when the group is admins-only-edit (403 not_authorized). Requires
+// groups:write.
+func (r *GroupsResource) RemovePicture(ctx context.Context, groupID string) (*GroupPictureRemoved, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodDelete,
+		path:   "/v1/groups/" + url.PathEscape(groupID) + "/picture",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var env struct {
+		Data GroupPictureRemoved `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return &env.Data, nil
+}
+
 // Leave removes the connected identity from the group. Idempotent — the
 // endpoint returns 204 with no body.
 func (r *GroupsResource) Leave(ctx context.Context, groupID string) error {
