@@ -33,6 +33,12 @@ func (r *ScheduledMessagesResource) Create(ctx context.Context, chatID string, p
 // List scheduled messages. Offset-paginated.
 func (r *ScheduledMessagesResource) List(ctx context.Context, params ListScheduledMessagesParams) (*ScheduledMessagesPage, error) {
 	q := url.Values{}
+	if params.IncludeSent != nil {
+		q.Set("includeSent", strconv.FormatBool(*params.IncludeSent))
+	}
+	if params.IncludePreview != nil {
+		q.Set("includePreview", strconv.FormatBool(*params.IncludePreview))
+	}
 	if params.ChatID != "" {
 		q.Set("chatId", params.ChatID)
 	}
@@ -85,6 +91,20 @@ func (r *ScheduledMessagesResource) Update(ctx context.Context, id string, param
 		method: http.MethodPatch,
 		path:   "/v1/scheduled-messages/" + url.PathEscape(id),
 		body:   params,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return decodeSentMessage(body)
+}
+
+// Cancel stops a queued scheduled message without deleting its record
+// (POST /v1/scheduled-messages/{id}/cancel). The returned message carries the
+// cancelled status.
+func (r *ScheduledMessagesResource) Cancel(ctx context.Context, id string) (*SentMessage, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPost,
+		path:   "/v1/scheduled-messages/" + url.PathEscape(id) + "/cancel",
 	})
 	if err != nil {
 		return nil, err

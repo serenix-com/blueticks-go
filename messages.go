@@ -19,6 +19,15 @@ type MessagesResource struct {
 // MessageTypes is sent as a single comma-separated query value.
 func (r *MessagesResource) List(ctx context.Context, params ListMessagesParams) (*MessagesPage, error) {
 	q := url.Values{}
+	if params.Engine != "" {
+		q.Set("engine", params.Engine)
+	}
+	if params.EngineID != "" {
+		q.Set("engineId", params.EngineID)
+	}
+	if params.NumberID != "" {
+		q.Set("numberId", params.NumberID)
+	}
 	if params.ChatID != "" {
 		q.Set("chatId", params.ChatID)
 	}

@@ -58,3 +58,15 @@ func TestLatestChatsDecodeEmptyResponse(t *testing.T) {
 		t.Fatalf("expected zero value, got %+v", got)
 	}
 }
+
+func TestLatestChatsEngineTargeting(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("engineId") != "eng_2" || r.URL.Query().Get("fanoutLimit") != "2" {
+			t.Errorf("unexpected query: %s", r.URL.RawQuery)
+		}
+		jsonResponse(w, `{"success":true,"data":{"chats":[],"totalChats":0,"numberOfChats":50,"numberOfMessages":20}}`)
+	})
+	if _, err := c.LatestChats.List(context.Background(), LatestChatsParams{EngineTarget: EngineTarget{EngineID: "eng_2", FanoutLimit: 2}}); err != nil {
+		t.Fatalf("List: %v", err)
+	}
+}

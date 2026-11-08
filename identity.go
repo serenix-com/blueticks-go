@@ -44,10 +44,10 @@ func (r *IdentityResource) Resolve(ctx context.Context, ids []string) (*ResolveI
 		return nil, err
 	}
 	var env struct {
-		Data ResolveIdentitiesResult `json:"data"`
+		Data []Identity `json:"data"`
 	}
 	if err := decodeJSON(body, &env); err != nil {
 		return nil, err
 	}
-	return &env.Data, nil
+	return &ResolveIdentitiesResult{Data: env.Data}, nil
 }

@@ -291,3 +291,95 @@ func TestMessagesSendMentions(t *testing.T) {
 		t.Fatalf("Send: %v", err)
 	}
 }
+
+func TestMessagesListEngineTargetingAndNewFields(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/messages" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		q := r.URL.Query()
+		want := map[string]string{"chatId": "c1@c.us", "engine": "gateway", "engineId": "eng_9", "numberId": "num_9"}
+		for k, v := range want {
+			if q.Get(k) != v {
+				t.Errorf("query %s=%q, want %q", k, q.Get(k), v)
+			}
+		}
+		jsonResponse(w, `{"success":true,"data":[{"waMessageKey":{"fromMe":false,"id":"A1","_serialized":"false_c1@c.us_A1"},"chatId":"c1@c.us","from":"c1@c.us","type":"call_log","waType":"call_log","subtype":"missed","fromMe":false,"call":{"direction":"in","media":"voice","outcome":"missed","isGroup":false},"groupEvent":null,"interactive":null,"reactions":[{"emoji":"👍","fromMe":true,"senderId":"c1@c.us"}]}],"limit":50,"skip":0,"total":1,"hasMore":true,"nextCursor":"cur_3","answeredBy":{"engineId":"eng_9","numberId":"num_9"},"autoLoadedPages":2,"sinceReached":true,"sources":{"backup":4},"coverage":{"oldestLoadedTimestamp":1700000000000,"oldestLoadedIso":"2023-11-14T22:13:20.000Z","messagesScanned":120,"truncated":true,"indexOnly":false,"oldestScannedIso":"2023-11-14T22:13:20.000Z"}}`)
+	})
+	got, err := c.Messages.List(context.Background(), ListMessagesParams{
+		ChatID: "c1@c.us", Engine: EngineTypeGateway, EngineID: "eng_9", NumberID: "num_9",
+	})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	msg := got.Data[0]
+	if msg.Call == nil || msg.Call.Outcome != "missed" || msg.WaType == nil || msg.GroupEvent != nil || len(msg.Reactions) != 1 {
+		t.Fatalf("unexpected message: %+v", msg)
+	}
+	if got.AnsweredBy == nil || got.AnsweredBy.EngineID != "eng_9" || got.NextCursor == nil || *got.NextCursor != "cur_3" {
+		t.Fatalf("unexpected answeredBy/nextCursor: %+v", got)
+	}
+	if got.AutoLoadedPages != 2 || !got.SinceReached || got.Sources == nil || got.Sources.Backup == nil || *got.Sources.Backup != 4 {
+		t.Fatalf("unexpected list metadata: %+v", got)
+	}
+	if got.Coverage == nil || got.Coverage.MessagesScanned == nil || *got.Coverage.MessagesScanned != 120 || got.Coverage.Truncated == nil || !*got.Coverage.Truncated {
+		t.Fatalf("unexpected coverage: %+v", got.Coverage)
+	}
+}
+
+func TestMessagesSendButtonReplyFromAndMediaFileID(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/messages/c1@c.us" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		raw, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(raw, &sent)
+		if _, present := sent["type"]; present {
+			t.Errorf("an empty type must be omitted from the body: %s", raw)
+		}
+		br, _ := sent["buttonReply"].(map[string]any)
+		if br["replyTo"] != "m1" || br["buttonId"] != "b1" {
+			t.Errorf("unexpected buttonReply: %s", raw)
+		}
+		if sent["engine"] != "gateway" || sent["engineId"] != "eng_9" || sent["from"] != "+15550001234" {
+			t.Errorf("unexpected engine/from: %s", raw)
+		}
+		if sent["mediaFileId"] != "f_1" || sent["mediaMimeType"] != "image/png" {
+			t.Errorf("unexpected media fields: %s", raw)
+		}
+		if labels, _ := sent["waLabelIds"].([]any); len(labels) != 1 {
+			t.Errorf("unexpected waLabelIds: %s", raw)
+		}
+		w.WriteHeader(http.StatusCreated)
+		jsonResponse(w, `{"success":true,"data":`+smData("m_1", "text")+`}`)
+	})
+	got, err := c.Messages.Send(context.Background(), "c1@c.us", SendInChatParams{
+		ButtonReply:   &ButtonReply{ReplyTo: "m1", ButtonID: "b1"},
+		Engine:        EngineTypeGateway,
+		EngineID:      "eng_9",
+		From:          "+15550001234",
+		MediaFileID:   "f_1",
+		MediaMimeType: "image/png",
+		WaLabelIDs:    []string{"1"},
+	})
+	if err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+	if got.ID != "m_1" {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
+func TestMessagesListPinnedIsNotPaginated(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		jsonResponse(w, `{"success":true,"data":[{"key":"k1","chatId":"c1@g.us","text":"hello"}]}`)
+	})
+	got, err := c.Messages.ListPinned(context.Background(), "c1@g.us")
+	if err != nil {
+		t.Fatalf("ListPinned: %v", err)
+	}
+	if len(got.Data) != 1 || got.Data[0].Key != "k1" {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
