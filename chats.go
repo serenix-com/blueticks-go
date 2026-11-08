@@ -15,14 +15,20 @@ type ChatsResource struct {
 
 // ListChatsParams is the query-param bundle for ChatsResource.List.
 type ListChatsParams struct {
+	// EngineTarget selects the engine that answers the read.
+	EngineTarget
 	SearchToken string
 	Filter      string // "groups" | "contacts" | "newsletters"
 	// Kinds keeps only these chat kinds ("contact" | "group" | "newsletter");
 	// sent as repeated kinds params.
 	Kinds []string
 	// Since keeps only chats whose last message is at/after this ISO 8601 instant.
-	Since               string
-	IncludeLastMessage  *bool
+	Since              string
+	IncludeLastMessage *bool
+	// IncludeExtendedInfo is deprecated: the spec no longer defines this query
+	// param and the server ignores it. Kept so existing callers still compile.
+	//
+	// Deprecated: no longer sent to the server.
 	IncludeExtendedInfo *bool
 	IncludeWithoutName  *bool
 	IncludeArchive      *bool
@@ -32,6 +38,8 @@ type ListChatsParams struct {
 
 // ListParticipantsParams is the query-param bundle for ChatsResource.ListParticipants.
 type ListParticipantsParams struct {
+	// EngineTarget selects the engine that answers the read.
+	EngineTarget
 	SearchToken string
 	Skip        int
 	Limit       int
@@ -40,6 +48,7 @@ type ListParticipantsParams struct {
 // List/search chats. Offset-paginated.
 func (r *ChatsResource) List(ctx context.Context, params ListChatsParams) (*ChatsPage, error) {
 	q := url.Values{}
+	params.EngineTarget.addQuery(q)
 	if params.SearchToken != "" {
 		q.Set("searchToken", params.SearchToken)
 	}
@@ -54,9 +63,6 @@ func (r *ChatsResource) List(ctx context.Context, params ListChatsParams) (*Chat
 	}
 	if params.IncludeLastMessage != nil {
 		q.Set("includeLastMessage", strconv.FormatBool(*params.IncludeLastMessage))
-	}
-	if params.IncludeExtendedInfo != nil {
-		q.Set("includeExtendedInfo", strconv.FormatBool(*params.IncludeExtendedInfo))
 	}
 	if params.IncludeWithoutName != nil {
 		q.Set("includeWithoutName", strconv.FormatBool(*params.IncludeWithoutName))
@@ -139,6 +145,7 @@ func (r *ChatsResource) okAction(ctx context.Context, chatID, action string) (*O
 // is paginated; for DMs the single counterparty is returned. Offset-paginated.
 func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, params ListParticipantsParams) (*ParticipantsPage, error) {
 	q := url.Values{}
+	params.EngineTarget.addQuery(q)
 	if params.SearchToken != "" {
 		q.Set("searchToken", params.SearchToken)
 	}
@@ -161,4 +168,36 @@ func (r *ChatsResource) ListParticipants(ctx context.Context, chatID string, par
 		return nil, err
 	}
 	return out, nil
+}
+
+// ListWaLabels returns the native WhatsApp Business labels applied to a chat.
+func (r *ChatsResource) ListWaLabels(ctx context.Context, chatID string) ([]WaLabel, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodGet,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/wa-labels",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var env struct {
+		Data []WaLabel `json:"data"`
+	}
+	if err := decodeJSON(body, &env); err != nil {
+		return nil, err
+	}
+	return env.Data, nil
+}
+
+// UpdateWaLabels replaces the native WhatsApp Business label set on a chat. An
+// empty params.LabelIDs clears all of them.
+func (r *ChatsResource) UpdateWaLabels(ctx context.Context, chatID string, params UpdateChatWaLabelsParams) (*OkResult, error) {
+	body, err := r.client.do(ctx, requestOptions{
+		method: http.MethodPatch,
+		path:   "/v1/chats/" + url.PathEscape(chatID) + "/wa-labels",
+		body:   params,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return decodeOkResult(body)
 }

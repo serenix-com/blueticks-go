@@ -162,3 +162,21 @@ func TestGroupsPictureUnauthorized(t *testing.T) {
 	_, err = c.Groups.RemovePicture(context.Background(), "g_1")
 	expectAuthError(t, err)
 }
+
+func TestGroupsListEngineTargeting(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/groups" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		q := r.URL.Query()
+		if q.Get("engine") != "regular" || q.Get("phone") != "+15550100" || q.Get("fanoutLimit") != "4" || q.Get("numberId") != "num_2" {
+			t.Errorf("unexpected query: %s", r.URL.RawQuery)
+		}
+		jsonResponse(w, `{"success":true,"data":[],"limit":50,"skip":0,"total":0}`)
+	})
+	if _, err := c.Groups.List(context.Background(), ListGroupsParams{EngineTarget: EngineTarget{
+		Engine: EngineTypeRegular, Phone: "+15550100", FanoutLimit: 4, NumberID: "num_2",
+	}}); err != nil {
+		t.Fatalf("List: %v", err)
+	}
+}

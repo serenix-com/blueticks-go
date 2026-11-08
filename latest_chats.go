@@ -17,6 +17,7 @@ type LatestChatsResource struct {
 // Requires `chats:read`.
 func (r *LatestChatsResource) List(ctx context.Context, params LatestChatsParams) (*LatestChatsResult, error) {
 	q := url.Values{}
+	params.EngineTarget.addQuery(q)
 	if params.NumberOfChats != nil {
 		q.Set("numberOfChats", strconv.Itoa(*params.NumberOfChats))
 	}

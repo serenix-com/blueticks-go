@@ -3,6 +3,8 @@ package blueticks
 import (
 	"context"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // EnginesResource exposes /v1/engines.
@@ -24,4 +26,23 @@ func (r *EnginesResource) List(ctx context.Context) ([]EngineStatus, error) {
 		return nil, err
 	}
 	return env.Data, nil
+}
+
+// addQuery writes the non-empty engine-targeting fields onto q.
+func (t EngineTarget) addQuery(q url.Values) {
+	if t.Engine != "" {
+		q.Set("engine", t.Engine)
+	}
+	if t.EngineID != "" {
+		q.Set("engineId", t.EngineID)
+	}
+	if t.NumberID != "" {
+		q.Set("numberId", t.NumberID)
+	}
+	if t.Phone != "" {
+		q.Set("phone", t.Phone)
+	}
+	if t.FanoutLimit > 0 {
+		q.Set("fanoutLimit", strconv.Itoa(t.FanoutLimit))
+	}
 }

@@ -2,6 +2,8 @@ package blueticks
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -62,5 +64,22 @@ func TestCampaignsUnauthorized(t *testing.T) {
 func TestCampaignDecodeEmptyResponse(t *testing.T) {
 	if err := decodeJSON([]byte(`{}`), &Campaign{}); err != nil {
 		t.Fatalf("Campaign empty decode: %v", err)
+	}
+}
+
+func TestCampaignsCreateWithSendAt(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(raw, &sent)
+		if sent["sendAt"] != "2026-12-01T09:00:00+02:00" {
+			t.Errorf("sendAt not sent: %s", raw)
+		}
+		jsonResponse(w, campaignFixture("scheduled"))
+	})
+	if _, err := c.Campaigns.Create(context.Background(), CreateCampaignParams{
+		Name: "Q1", AudienceID: "aud_1", Text: "hi", SendAt: "2026-12-01T09:00:00+02:00",
+	}); err != nil {
+		t.Fatalf("Create: %v", err)
 	}
 }

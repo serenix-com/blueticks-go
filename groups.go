@@ -14,6 +14,8 @@ type GroupsResource struct {
 
 // ListGroupsParams is the query-param bundle for GroupsResource.List.
 type ListGroupsParams struct {
+	// EngineTarget selects the engine that answers the read.
+	EngineTarget
 	SearchToken    string
 	IncludeArchive *bool
 	Skip           int
@@ -23,6 +25,7 @@ type ListGroupsParams struct {
 // List the groups the connected WhatsApp engine sees. Offset-paginated.
 func (r *GroupsResource) List(ctx context.Context, params ListGroupsParams) (*GroupsPage, error) {
 	q := url.Values{}
+	params.EngineTarget.addQuery(q)
 	if params.SearchToken != "" {
 		q.Set("searchToken", params.SearchToken)
 	}

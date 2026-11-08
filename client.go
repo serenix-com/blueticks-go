@@ -36,6 +36,8 @@ type Client struct {
 	Boards            *BoardsResource
 	Identity          *IdentityResource
 	LatestChats       *LatestChatsResource
+	Uploads           *UploadsResource
+	WaLabels          *WaLabelsResource
 	Realtime          *RealtimeResource
 }
 
@@ -123,6 +125,8 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Boards = &BoardsResource{client: c}
 	c.Identity = &IdentityResource{client: c}
 	c.LatestChats = &LatestChatsResource{client: c}
+	c.Uploads = &UploadsResource{client: c}
+	c.WaLabels = &WaLabelsResource{client: c}
 	c.Realtime = &RealtimeResource{client: c}
 
 	return c, nil

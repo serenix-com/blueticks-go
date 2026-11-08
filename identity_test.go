@@ -50,7 +50,7 @@ func TestIdentityResolve(t *testing.T) {
 		if len(body.IDs) != 2 || body.IDs[0] != "a@lid" {
 			t.Errorf("unexpected body: %s", raw)
 		}
-		jsonResponse(w, `{"success":true,"data":{"data":[{"input":"a@lid","resolved":true,"aliases":[],"type":"user","source":"cache"},{"input":"b@g.us","resolved":true,"aliases":[],"type":"group","source":"engine"}]}}`)
+		jsonResponse(w, `{"success":true,"data":[{"input":"a@lid","resolved":true,"aliases":[],"type":"user","source":"cache"},{"input":"b@g.us","resolved":true,"aliases":[],"type":"group","source":"engine"}]}`)
 	})
 	got, err := c.Identity.Resolve(context.Background(), []string{"a@lid", "b@g.us"})
 	if err != nil {

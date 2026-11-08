@@ -160,3 +160,94 @@ func TestScheduledMessagesUpdateMentions(t *testing.T) {
 		t.Fatalf("Update: %v", err)
 	}
 }
+
+func TestScheduledMessagesCancel(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages/sm_1/cancel" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		jsonResponse(w, `{"success":true,"data":{"id":"sm_1","waMessageKey":null,"to":"c1@c.us","type":"text","text":"hi","mediaUrl":null,"mediaKind":null,"pollQuestion":null,"pollOptions":null,"pollAllowMultiple":null,"status":"cancelled","sendAt":null,"createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"secret":null,"linkPreview":null}}`)
+	})
+	got, err := c.ScheduledMessages.Cancel(context.Background(), "sm_1")
+	if err != nil {
+		t.Fatalf("Cancel: %v", err)
+	}
+	if got.ID != "sm_1" || got.Status != MessageStatusCancelled {
+		t.Fatalf("unexpected: %+v", got)
+	}
+}
+
+func TestScheduledMessagesListIncludeSentAndPreview(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("includeSent") != "true" || r.URL.Query().Get("includePreview") != "true" {
+			t.Errorf("unexpected query: %s", r.URL.RawQuery)
+		}
+		jsonResponse(w, `{"success":true,"data":[],"limit":50,"skip":0,"total":0}`)
+	})
+	yes := true
+	if _, err := c.ScheduledMessages.List(context.Background(), ListScheduledMessagesParams{IncludeSent: &yes, IncludePreview: &yes}); err != nil {
+		t.Fatalf("List: %v", err)
+	}
+}
+
+func TestScheduledMessagesCreateRecurrenceWaLabelsAndFrom(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/scheduled-messages/c1@c.us" {
+			t.Errorf("unexpected: %s %s", r.Method, r.URL.Path)
+		}
+		raw, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(raw, &sent)
+		if _, present := sent["mediaFileId"]; present {
+			t.Errorf("unset mediaFileId must be omitted: %s", raw)
+		}
+		if sent["from"] != "+15550001234" {
+			t.Errorf("from not sent: %s", raw)
+		}
+		rec, _ := sent["recurrence"].(map[string]any)
+		if rec["frequency"] != "weekly" || rec["interval"] != float64(2) || rec["endsAfter"] != float64(5) {
+			t.Errorf("unexpected recurrence: %s", raw)
+		}
+		if wd, _ := rec["byWeekday"].([]any); len(wd) != 2 {
+			t.Errorf("unexpected byWeekday: %s", raw)
+		}
+		if labels, _ := sent["waLabelIds"].([]any); len(labels) != 1 {
+			t.Errorf("unexpected waLabelIds: %s", raw)
+		}
+		w.WriteHeader(http.StatusCreated)
+		jsonResponse(w, `{"success":true,"data":{"id":"sm_2","waMessageKey":null,"to":"c1@c.us","recipientName":"Alice","type":"text","text":"hi","mediaUrl":null,"mediaKind":null,"pollQuestion":null,"pollOptions":null,"pollAllowMultiple":null,"status":"pending","sendAt":"2026-12-01T09:00:00Z","createdAt":"2026-01-01T00:00:00Z","confirmedAt":null,"receivedAt":null,"readAt":null,"playedAt":null,"failedAt":null,"failureReason":null,"secret":null,"linkPreview":null,"recurrence":{"frequency":"weekly","interval":2,"byWeekday":["MO","FR"],"endsAfter":5,"endsOn":null,"timezone":"UTC"},"waLabels":{"requested":1,"applied":false,"error":"wa_business_required"},"warning":{"code":"no_engine_connected","message":"No engine was connected when scheduled."}}}`)
+	})
+	two, five := 2, 5
+	got, err := c.ScheduledMessages.Create(context.Background(), "c1@c.us", SendMessageParams{
+		Type: MessageTypeText, Text: "hi", From: "+15550001234", WaLabelIDs: []string{"1"},
+		Recurrence: &RecurrenceInput{
+			Frequency: RecurrenceFrequencyWeekly, Interval: &two,
+			ByWeekday: []string{RecurrenceWeekdayMO, RecurrenceWeekdayFR}, EndsAfter: &five,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if got.RecipientName == nil || *got.RecipientName != "Alice" || got.Recurrence == nil || got.Recurrence.Frequency != RecurrenceFrequencyWeekly {
+		t.Fatalf("unexpected recurrence/recipient: %+v", got)
+	}
+	if got.WaLabels == nil || got.WaLabels.Applied || got.WaLabels.Error == nil || got.Warning == nil || got.Warning.Code != "no_engine_connected" {
+		t.Fatalf("unexpected waLabels/warning: %+v / %+v", got.WaLabels, got.Warning)
+	}
+}
+
+func TestScheduledMessagesUpdateMediaFileID(t *testing.T) {
+	c, _ := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		var sent map[string]any
+		_ = json.Unmarshal(raw, &sent)
+		if sent["mediaFileId"] != "f_9" || sent["mediaMimeType"] != "video/mp4" {
+			t.Errorf("unexpected body: %s", raw)
+		}
+		jsonResponse(w, `{"success":true,"data":`+smData("sm_3", "media")+`}`)
+	})
+	fid, mime := "f_9", "video/mp4"
+	if _, err := c.ScheduledMessages.Update(context.Background(), "sm_3", UpdateScheduledMessageParams{MediaFileID: &fid, MediaMimeType: &mime}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+}

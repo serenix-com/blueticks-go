@@ -1,5 +1,7 @@
 package blueticks
 
+import "encoding/json"
+
 // Response and request types for the Blueticks API (v2).
 //
 // Field naming follows the wire format (camelCase) via `json:` tags. Go field
@@ -37,18 +39,22 @@ type CampaignsPage struct {
 
 // ChatsPage is the offset-paginated response from ChatsResource.List.
 type ChatsPage struct {
-	Data  []Chat `json:"data"`
-	Limit int    `json:"limit"`
-	Skip  int    `json:"skip"`
-	Total int    `json:"total"`
+	Data       []Chat      `json:"data"`
+	Limit      int         `json:"limit"`
+	Skip       int         `json:"skip"`
+	Total      int         `json:"total"`
+	AnsweredBy *AnsweredBy `json:"answeredBy,omitempty"`
+	NextCursor *string     `json:"nextCursor,omitempty"`
 }
 
 // ParticipantsPage is the offset-paginated response from ChatsResource.ListParticipants.
 type ParticipantsPage struct {
-	Data  []Participant `json:"data"`
-	Limit int           `json:"limit"`
-	Skip  int           `json:"skip"`
-	Total int           `json:"total"`
+	Data       []Participant `json:"data"`
+	Limit      int           `json:"limit"`
+	Skip       int           `json:"skip"`
+	Total      int           `json:"total"`
+	AnsweredBy *AnsweredBy   `json:"answeredBy,omitempty"`
+	NextCursor *string       `json:"nextCursor,omitempty"`
 }
 
 // ContactsPage is the offset-paginated response from ContactsResource.List.
@@ -61,10 +67,12 @@ type ContactsPage struct {
 
 // GroupsPage is the offset-paginated response from GroupsResource.List.
 type GroupsPage struct {
-	Data  []GroupListItem `json:"data"`
-	Limit int             `json:"limit"`
-	Skip  int             `json:"skip"`
-	Total int             `json:"total"`
+	Data       []GroupListItem `json:"data"`
+	Limit      int             `json:"limit"`
+	Skip       int             `json:"skip"`
+	Total      int             `json:"total"`
+	AnsweredBy *AnsweredBy     `json:"answeredBy,omitempty"`
+	NextCursor *string         `json:"nextCursor,omitempty"`
 }
 
 // CommonGroupsPage is the offset-paginated response from ContactsResource.CommonGroups.
@@ -92,36 +100,40 @@ type MessagesPage struct {
 	Skip    int       `json:"skip"`
 	Total   int       `json:"total"`
 	HasMore bool      `json:"hasMore,omitempty"`
-	// Coverage reports how far back this page reaches (oldest message in the
-	// returned page). Nil when the page has no dated message.
-	Coverage *LoadCoverage `json:"coverage,omitempty"`
+	// NextCursor is the opaque cursor for the next page, when the engine provides one.
+	NextCursor *string `json:"nextCursor,omitempty"`
+	// AnsweredBy names the engine that served the read.
+	AnsweredBy *AnsweredBy `json:"answeredBy,omitempty"`
+	// AutoLoadedPages is how many history pages were pulled from the phone during this call.
+	AutoLoadedPages int `json:"autoLoadedPages,omitempty"`
+	// SinceReached is true when a `since` bound was satisfied by the loaded history.
+	SinceReached bool `json:"sinceReached,omitempty"`
+	// Sources counts messages read per store (for example "backup").
+	Sources *MessageSources `json:"sources,omitempty"`
+	// Coverage reports how far back this read reached and whether it was truncated.
+	Coverage *MessageListCoverage `json:"coverage,omitempty"`
 }
 
-// PinnedMessagesPage is the offset-paginated response from MessagesResource.ListPinned.
+// PinnedMessagesPage is the response from MessagesResource.ListPinned. It is not paginated.
 type PinnedMessagesPage struct {
-	Data  []PinnedMessage `json:"data"`
-	Limit int             `json:"limit"`
-	Skip  int             `json:"skip"`
-	Total int             `json:"total"`
+	Data []PinnedMessage `json:"data"`
 }
 
 // BatchMessageAcksResult is the response from MessagesResource.BatchAcks. The
-// server echoes the offset-pagination fields even though the query is a fixed
-// batch of keys.
+// It is not paginated: the response is the array of per-key entries only.
 type BatchMessageAcksResult struct {
-	Data  []BatchMessageAckEntry `json:"data"`
-	Limit int                    `json:"limit"`
-	Skip  int                    `json:"skip"`
-	Total int                    `json:"total"`
+	Data []BatchMessageAckEntry `json:"data"`
 }
 
 // ScheduledMessagesPage is the offset-paginated response from
 // ScheduledMessagesResource.List.
 type ScheduledMessagesPage struct {
-	Data  []SentMessage `json:"data"`
-	Limit int           `json:"limit"`
-	Skip  int           `json:"skip"`
-	Total int           `json:"total"`
+	Data       []SentMessage `json:"data"`
+	Limit      int           `json:"limit"`
+	Skip       int           `json:"skip"`
+	Total      int           `json:"total"`
+	AnsweredBy *AnsweredBy   `json:"answeredBy,omitempty"`
+	NextCursor *string       `json:"nextCursor,omitempty"`
 }
 
 // WebhooksPage is the paginated response from WebhooksResource.List.
@@ -295,6 +307,8 @@ type CreateCampaignParams struct {
 	MediaURL          string `json:"mediaUrl,omitempty"`
 	MediaCaption      string `json:"mediaCaption,omitempty"`
 	OnMissingVariable string `json:"onMissingVariable,omitempty"`
+	// SendAt schedules the campaign for later (ISO 8601 with offset). Omit to start now.
+	SendAt string `json:"sendAt,omitempty"`
 }
 
 // --- Webhooks (FROZEN — webhooks.go / webhooks_verify.go are hand-maintained) -
@@ -570,12 +584,22 @@ type Message struct {
 	Timestamp     *string             `json:"timestamp,omitempty"`
 	Text          *string             `json:"text,omitempty"`
 	Type          string              `json:"type"`
+	WaType        *string             `json:"waType,omitempty"`
+	Subtype       *string             `json:"subtype,omitempty"`
 	FromMe        bool                `json:"fromMe"`
 	Ack           *int                `json:"ack,omitempty"`
 	MediaURL      *string             `json:"mediaUrl,omitempty"`
 	Filename      *string             `json:"filename,omitempty"`
 	LinkPreview   *MessageLinkPreview `json:"linkPreview,omitempty"`
 	QuotedMessage *QuotedMessage      `json:"quotedMessage,omitempty"`
+	// Call is set on call_log messages.
+	Call *MessageCall `json:"call,omitempty"`
+	// GroupEvent is set on group system messages (join, leave, promote, ...).
+	GroupEvent *MessageGroupEvent `json:"groupEvent,omitempty"`
+	// Interactive is set on button, list and template messages and their replies.
+	Interactive *MessageInteractive `json:"interactive,omitempty"`
+	// Reactions are the emoji reactions on the message.
+	Reactions []MessageReaction `json:"reactions,omitempty"`
 	// Source is where the message was read from ("vault" or "backup").
 	Source *string `json:"source,omitempty"`
 	// Secret is the correlation token the sender attached at send time. Present
@@ -594,6 +618,7 @@ type SentMessage struct {
 	ID                string              `json:"id,omitempty"`
 	WaMessageKey      *WaMessageKey       `json:"waMessageKey"`
 	To                string              `json:"to"`
+	RecipientName     *string             `json:"recipientName,omitempty"`
 	Type              string              `json:"type"`
 	Text              *string             `json:"text"`
 	MediaURL          *string             `json:"mediaUrl"`
@@ -603,6 +628,7 @@ type SentMessage struct {
 	PollAllowMultiple *bool               `json:"pollAllowMultiple"`
 	Status            string              `json:"status"`
 	SendAt            *string             `json:"sendAt"`
+	Recurrence        *RecurrenceResponse `json:"recurrence,omitempty"`
 	CreatedAt         string              `json:"createdAt"`
 	ConfirmedAt       *string             `json:"confirmedAt"`
 	ReceivedAt        *string             `json:"receivedAt"`
@@ -612,6 +638,10 @@ type SentMessage struct {
 	FailureReason     *string             `json:"failureReason"`
 	Secret            *string             `json:"secret"`
 	LinkPreview       *MessageLinkPreview `json:"linkPreview,omitempty"`
+	// WaLabels reports whether the requested WhatsApp Business labels were applied.
+	WaLabels *WaLabelApplyResult `json:"waLabels,omitempty"`
+	// Warning is set when the message was accepted with a caveat (for example no engine connected).
+	Warning *MessageWarning `json:"warning,omitempty"`
 }
 
 // MessageAck is the response from GET /v1/messages/ack/{waMessageKey}.
@@ -696,13 +726,17 @@ type LoadOlderParams struct {
 // The server validates the type/variant pair. IdempotencyKey is sent as the
 // Idempotency-Key header, not in the body.
 type SendInChatParams struct {
-	Type              string   `json:"type"`
-	ReplyTo           string   `json:"replyTo,omitempty"`
-	Text              string   `json:"text,omitempty"`
-	MediaURL          string   `json:"mediaUrl,omitempty"`
-	MediaBase64       string   `json:"mediaBase64,omitempty"`
+	Type        string       `json:"type,omitempty"`
+	ButtonReply *ButtonReply `json:"buttonReply,omitempty"`
+	ReplyTo     string       `json:"replyTo,omitempty"`
+	Text        string       `json:"text,omitempty"`
+	MediaURL    string       `json:"mediaUrl,omitempty"`
+	MediaBase64 string       `json:"mediaBase64,omitempty"`
+	// MediaFileID references an upload from UploadsResource.Create.
+	MediaFileID       string   `json:"mediaFileId,omitempty"`
 	MediaKind         string   `json:"mediaKind,omitempty"`
 	MediaFilename     string   `json:"mediaFilename,omitempty"`
+	MediaMimeType     string   `json:"mediaMimeType,omitempty"`
 	PollQuestion      string   `json:"pollQuestion,omitempty"`
 	PollOptions       []string `json:"pollOptions,omitempty"`
 	PollAllowMultiple *bool    `json:"pollAllowMultiple,omitempty"`
@@ -710,8 +744,14 @@ type SendInChatParams struct {
 	// @name in Text yourself.
 	Mentions      []string `json:"mentions,omitempty"`
 	Secret        string   `json:"secret,omitempty"`
+	From          string   `json:"from,omitempty"`
+	Engine        string   `json:"engine,omitempty"`
+	EngineID      string   `json:"engineId,omitempty"`
+	NumberID      string   `json:"numberId,omitempty"`
 	WithTyping    *bool    `json:"withTyping,omitempty"`
 	TypingSeconds *float64 `json:"typingSeconds,omitempty"`
+	// WaLabelIDs applies these native WhatsApp Business label ids to the chat.
+	WaLabelIDs []string `json:"waLabelIds,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -779,8 +819,13 @@ type ListMessagesParams struct {
 	Sender                string
 	LoadFromPhoneIfNeeded *bool
 	IncludeMediaContent   *bool
-	Skip                  int
-	Limit                 int
+	// Engine, EngineID and NumberID choose which connected engine serves the read
+	// (Engine is EngineTypeGateway or EngineTypeRegular).
+	Engine   string
+	EngineID string
+	NumberID string
+	Skip     int
+	Limit    int
 }
 
 // --- Scheduled Messages ------------------------------------------------------
@@ -790,13 +835,17 @@ type ListMessagesParams struct {
 // SendAt to schedule; omit for immediate queueing. IdempotencyKey is sent as
 // the Idempotency-Key header.
 type SendMessageParams struct {
-	Type              string   `json:"type"`
-	ReplyTo           string   `json:"replyTo,omitempty"`
-	Text              string   `json:"text,omitempty"`
-	MediaURL          string   `json:"mediaUrl,omitempty"`
-	MediaBase64       string   `json:"mediaBase64,omitempty"`
+	Type        string       `json:"type,omitempty"`
+	ButtonReply *ButtonReply `json:"buttonReply,omitempty"`
+	ReplyTo     string       `json:"replyTo,omitempty"`
+	Text        string       `json:"text,omitempty"`
+	MediaURL    string       `json:"mediaUrl,omitempty"`
+	MediaBase64 string       `json:"mediaBase64,omitempty"`
+	// MediaFileID references an upload from UploadsResource.Create.
+	MediaFileID       string   `json:"mediaFileId,omitempty"`
 	MediaKind         string   `json:"mediaKind,omitempty"`
 	MediaFilename     string   `json:"mediaFilename,omitempty"`
+	MediaMimeType     string   `json:"mediaMimeType,omitempty"`
 	PollQuestion      string   `json:"pollQuestion,omitempty"`
 	PollOptions       []string `json:"pollOptions,omitempty"`
 	PollAllowMultiple *bool    `json:"pollAllowMultiple,omitempty"`
@@ -804,10 +853,16 @@ type SendMessageParams struct {
 	// @name in Text yourself.
 	Mentions []string `json:"mentions,omitempty"`
 	Secret   string   `json:"secret,omitempty"`
-	SendAt   string   `json:"sendAt,omitempty"`
+	// From selects the sending number.
+	From   string `json:"from,omitempty"`
+	SendAt string `json:"sendAt,omitempty"`
+	// Recurrence repeats the scheduled send. Requires SendAt.
+	Recurrence *RecurrenceInput `json:"recurrence,omitempty"`
 	// RecipientName is an optional display name shown next to the message in the
 	// scheduled-message list; resolved automatically when omitted.
 	RecipientName string `json:"recipientName,omitempty"`
+	// WaLabelIDs applies these native WhatsApp Business label ids to the chat.
+	WaLabelIDs []string `json:"waLabelIds,omitempty"`
 	// IdempotencyKey is sent as the Idempotency-Key header, not in the body.
 	IdempotencyKey string `json:"-"`
 }
@@ -820,8 +875,10 @@ type UpdateScheduledMessageParams struct {
 	Text              *string  `json:"text,omitempty"`
 	MediaURL          *string  `json:"mediaUrl,omitempty"`
 	MediaBase64       *string  `json:"mediaBase64,omitempty"`
+	MediaFileID       *string  `json:"mediaFileId,omitempty"`
 	MediaKind         *string  `json:"mediaKind,omitempty"`
 	MediaFilename     *string  `json:"mediaFilename,omitempty"`
+	MediaMimeType     *string  `json:"mediaMimeType,omitempty"`
 	SendAt            *string  `json:"sendAt,omitempty"`
 	ReplyTo           *string  `json:"replyTo,omitempty"`
 	Secret            *string  `json:"secret,omitempty"`
@@ -839,8 +896,12 @@ type ListScheduledMessagesParams struct {
 	SearchToken string
 	Status      string
 	Order       string // "asc" or "desc"
-	Skip        int
-	Limit       int
+	// IncludeSent also returns messages that already went out.
+	IncludeSent *bool
+	// IncludePreview also returns the preview of each message.
+	IncludePreview *bool
+	Skip           int
+	Limit          int
 }
 
 // --- Engines -----------------------------------------------------------------
@@ -1200,6 +1261,8 @@ type LatestChatsResult struct {
 // Pointers so an explicit 0 (NumberOfMessages=0 is valid) is distinguishable
 // from "use the server default".
 type LatestChatsParams struct {
+	// EngineTarget selects the engine that answers the read.
+	EngineTarget
 	NumberOfChats    *int // 1-200, default 50
 	NumberOfMessages *int // 0-100, default 20
 }
@@ -1233,4 +1296,180 @@ type DeletedRef struct {
 type DeletedResource struct {
 	ID      string `json:"id"`
 	Deleted bool   `json:"deleted"`
+}
+
+// --- Engine targeting --------------------------------------------------------
+
+// EngineTarget selects which connected engine answers a read. Embed it in a list
+// params struct; empty fields are not sent. Engine is EngineTypeGateway or
+// EngineTypeRegular. FanoutLimit caps how many engines a multi-engine read fans
+// out to.
+type EngineTarget struct {
+	Engine      string
+	EngineID    string
+	NumberID    string
+	Phone       string
+	FanoutLimit int
+}
+
+// AnsweredBy names the engine that served a read (present on list envelopes).
+type AnsweredBy struct {
+	EngineID    string `json:"engineId,omitempty"`
+	NumberID    string `json:"numberId,omitempty"`
+	PhoneNumber string `json:"phoneNumber,omitempty"`
+}
+
+// --- Message history extras --------------------------------------------------
+
+// MessageSources counts the messages a read pulled from each store.
+type MessageSources struct {
+	Backup *int `json:"backup,omitempty"`
+}
+
+// MessageListCoverage reports how far back a message read reached.
+type MessageListCoverage struct {
+	// OldestLoadedTimestamp is epoch milliseconds of the oldest loaded message.
+	OldestLoadedTimestamp *float64 `json:"oldestLoadedTimestamp,omitempty"`
+	OldestLoadedIso       *string  `json:"oldestLoadedIso,omitempty"`
+	MessagesScanned       *int     `json:"messagesScanned,omitempty"`
+	// Truncated is true when the read stopped before reaching the requested range.
+	// Treat a truncated read as inconclusive, not as "nothing there".
+	Truncated *bool `json:"truncated,omitempty"`
+	// IndexOnly is true when only the local index was searched.
+	IndexOnly        *bool   `json:"indexOnly,omitempty"`
+	OldestScannedIso *string `json:"oldestScannedIso,omitempty"`
+}
+
+// MessageCall is the call detail on a call_log message.
+type MessageCall struct {
+	Direction   string `json:"direction,omitempty"`
+	Media       string `json:"media,omitempty"`
+	Outcome     string `json:"outcome,omitempty"`
+	DurationSec *int   `json:"durationSec,omitempty"`
+	IsGroup     *bool  `json:"isGroup,omitempty"`
+}
+
+// MessageGroupEvent is a group system event (join, leave, promote, ...).
+type MessageGroupEvent struct {
+	Action  string   `json:"action"`
+	Actor   *string  `json:"actor,omitempty"`
+	Targets []string `json:"targets,omitempty"`
+}
+
+// MessageInteractive is the button, list or template payload of an interactive message.
+type MessageInteractive struct {
+	Kind          string            `json:"kind"`
+	Options       []json.RawMessage `json:"options,omitempty"`
+	SelectedID    *string           `json:"selectedId,omitempty"`
+	SelectedTitle *string           `json:"selectedTitle,omitempty"`
+	QuotedID      *string           `json:"quotedId,omitempty"`
+}
+
+// MessageReaction is one emoji reaction on a message.
+type MessageReaction struct {
+	Emoji     string  `json:"emoji"`
+	SenderID  *string `json:"senderId,omitempty"`
+	FromMe    bool    `json:"fromMe,omitempty"`
+	Timestamp *string `json:"timestamp,omitempty"`
+}
+
+// ButtonReply answers a button or list message. ReplyTo is the message key being
+// answered; ButtonID is the chosen button id.
+type ButtonReply struct {
+	ReplyTo     string `json:"replyTo"`
+	ButtonID    string `json:"buttonId"`
+	RowID       string `json:"rowId,omitempty"`
+	ButtonTitle string `json:"buttonTitle,omitempty"`
+}
+
+// MessageWarning is a non-fatal caveat attached to a scheduled message.
+type MessageWarning struct {
+	// Code is "no_engine_connected" when no engine was connected at schedule time.
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// WaLabelApplyResult reports whether requested WhatsApp Business labels were applied.
+type WaLabelApplyResult struct {
+	Requested int     `json:"requested"`
+	Applied   bool    `json:"applied"`
+	Error     *string `json:"error,omitempty"`
+}
+
+// --- Recurrence --------------------------------------------------------------
+
+// Documented values for RecurrenceInput.Frequency and RecurrenceResponse.Frequency.
+const (
+	RecurrenceFrequencyDaily   = "daily"
+	RecurrenceFrequencyWeekly  = "weekly"
+	RecurrenceFrequencyMonthly = "monthly"
+	RecurrenceFrequencyYearly  = "yearly"
+)
+
+// Documented values for the RecurrenceInput.ByWeekday entries.
+const (
+	RecurrenceWeekdayMO = "MO"
+	RecurrenceWeekdayTU = "TU"
+	RecurrenceWeekdayWE = "WE"
+	RecurrenceWeekdayTH = "TH"
+	RecurrenceWeekdayFR = "FR"
+	RecurrenceWeekdaySA = "SA"
+	RecurrenceWeekdaySU = "SU"
+)
+
+// RecurrenceInput repeats a scheduled send. Set on SendMessageParams.Recurrence.
+type RecurrenceInput struct {
+	Frequency string   `json:"frequency"`
+	Interval  *int     `json:"interval,omitempty"`
+	ByWeekday []string `json:"byWeekday,omitempty"`
+	EndsAfter *int     `json:"endsAfter,omitempty"`
+	EndsOn    *string  `json:"endsOn,omitempty"`
+	Timezone  *string  `json:"timezone,omitempty"`
+}
+
+// RecurrenceResponse is the recurrence echoed back on a scheduled message.
+type RecurrenceResponse struct {
+	Frequency string   `json:"frequency"`
+	Interval  *int     `json:"interval"`
+	ByWeekday []string `json:"byWeekday"`
+	EndsAfter *int     `json:"endsAfter"`
+	EndsOn    *string  `json:"endsOn"`
+	Timezone  *string  `json:"timezone"`
+}
+
+// --- WhatsApp Business labels ------------------------------------------------
+
+// WaLabel is a native WhatsApp Business label defined on the connected account.
+type WaLabel struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+// UpdateChatWaLabelsParams replaces the native label set on a chat. An empty
+// LabelIDs clears all native labels.
+type UpdateChatWaLabelsParams struct {
+	LabelIDs []string `json:"labelIds"`
+}
+
+// --- Uploads -----------------------------------------------------------------
+
+// CreateFileUploadParams requests a signed upload link (POST /v1/uploads).
+type CreateFileUploadParams struct {
+	ContentType string `json:"contentType"`
+	SizeBytes   int    `json:"sizeBytes,omitempty"`
+	Filename    string `json:"filename,omitempty"`
+}
+
+// FileUpload is a signed upload link. PUT the raw bytes to UploadURL with exactly
+// Headers, then send with type "media" and mediaFileId set to FileID.
+type FileUpload struct {
+	FileID      string            `json:"fileId"`
+	UploadURL   string            `json:"uploadUrl"`
+	Method      string            `json:"method"`
+	Headers     map[string]string `json:"headers"`
+	ExpiresAt   string            `json:"expiresAt"`
+	DeleteAt    string            `json:"deleteAt"`
+	MaxBytes    float64           `json:"maxBytes"`
+	ContentType string            `json:"contentType"`
 }
