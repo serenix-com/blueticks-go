@@ -100,3 +100,30 @@ func TestVerifyWebhookSignatureNotIncludingID(t *testing.T) {
 		t.Fatalf("VerifyWebhook: %v", err)
 	}
 }
+
+func TestVerifyWebhookIdempotencyKey(t *testing.T) {
+	secret := "whsec_test"
+	now := time.Date(2026, 4, 30, 12, 0, 0, 0, time.UTC)
+	ts := strconv.FormatInt(now.Unix(), 10)
+	cases := []struct {
+		name string
+		body string
+		want string
+	}{
+		{"present", `{"id":"evt_1","type":"x","created_at":"2026-01-01T00:00:00Z","data":{},"idempotency_key":"idem_1"}`, "idem_1"},
+		{"absent", `{"id":"evt_1","type":"x","created_at":"2026-01-01T00:00:00Z","data":{}}`, ""},
+	}
+	for _, c := range cases {
+		body := []byte(c.body)
+		headers := http.Header{}
+		headers.Set("Blueticks-Webhook-Timestamp", ts)
+		headers.Set("Blueticks-Webhook-Signature", "v1="+sign(secret, ts, body))
+		evt, err := VerifyWebhook(body, headers, secret, withNowFunc(func() time.Time { return now }))
+		if err != nil {
+			t.Fatalf("%s: VerifyWebhook: %v", c.name, err)
+		}
+		if evt.IdempotencyKey != c.want {
+			t.Fatalf("%s: IdempotencyKey = %q, want %q", c.name, evt.IdempotencyKey, c.want)
+		}
+	}
+}

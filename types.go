@@ -326,6 +326,9 @@ type WebhookEvent struct {
 	Type      string                 `json:"type"`
 	CreatedAt string                 `json:"created_at"`
 	Data      map[string]interface{} `json:"data"`
+	// IdempotencyKey is the key of the request that produced the event, when
+	// there was one. Empty when the payload carries none.
+	IdempotencyKey string `json:"idempotency_key,omitempty"`
 }
 
 // CreateWebhookParams is the body for WebhooksResource.Create.
